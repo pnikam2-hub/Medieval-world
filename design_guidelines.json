@@ -1,0 +1,132 @@
+{
+  "theme_and_archetype": {
+    "domain": "Narrative Adventure Game",
+    "theme": "DARK",
+    "archetype": "5 (Luxury/Cinematic) mixed with 1 (Organic/Earthy)",
+    "core_philosophy": "Diegetic, context-sensitive UI. The interface is part of the camera language. Muted stone/ash world that blooms into warm gold.",
+    "forbidden": [
+      "Inter",
+      "Space Grotesk",
+      "Roboto",
+      "purple-on-white gradients",
+      "teal accents",
+      "flat gamified SaaS UI"
+    ]
+  },
+  "typography": {
+    "primary_font": {
+      "family": "Cormorant Garamond",
+      "usage": "Headings, Chapter Titles, Mythic Prompts",
+      "weights": [300, 400, 600, 700],
+      "url": "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap"
+    },
+    "secondary_font": {
+      "family": "Outfit",
+      "usage": "HUD, Dialogue Cards, Controls, Readability",
+      "weights": [300, 400, 500],
+      "url": "https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&display=swap"
+    },
+    "scale": {
+      "h1": "text-5xl md:text-6xl tracking-tight leading-none font-light",
+      "h2": "text-3xl md:text-4xl tracking-tight leading-snug",
+      "h3": "text-2xl md:text-3xl",
+      "body": "text-base md:text-lg leading-relaxed tracking-wide",
+      "overline": "text-xs uppercase tracking-[0.3em] font-medium"
+    }
+  },
+  "color_system": {
+    "background": {
+      "void": "#050505",
+      "wasteland_stone": "#161616",
+      "wasteland_ash": "#262626",
+      "ui_overlay": "rgba(10, 10, 10, 0.6)"
+    },
+    "text": {
+      "primary": "#F5F5F5",
+      "secondary": "#A3A3A3",
+      "muted": "#737373"
+    },
+    "accents": {
+      "heart_gold_base": "#D4AF37",
+      "heart_gold_glow": "#FADB5F",
+      "heart_ember": "#FB8500",
+      "mirror_silver": "#E2E8F0",
+      "mirror_ice": "#F8FAFC"
+    },
+    "choice_tags": {
+      "avoidance_control": {
+        "bg": "rgba(71, 85, 105, 0.2)",
+        "border": "rgba(71, 85, 105, 0.4)",
+        "text": "#CBD5E1"
+      },
+      "honesty_compassion": {
+        "bg": "rgba(212, 175, 55, 0.15)",
+        "border": "rgba(212, 175, 55, 0.4)",
+        "text": "#FADB5F"
+      }
+    }
+  },
+  "spacing_and_layout": {
+    "philosophy": "Cinematic framing. Heavy use of negative space. UI elements pushed to the edges.",
+    "containers": "Use glassmorphism (crystal variant) for UI overlays: backdrop-blur-md bg-black/40 border border-white/10.",
+    "game_canvas": "w-screen h-screen absolute inset-0 z-0",
+    "ui_layer": "absolute inset-0 z-10 pointer-events-none flex flex-col justify-between p-6 md:p-12",
+    "interactive_elements": "Must have pointer-events-auto"
+  },
+  "components": {
+    "title_screen": {
+      "layout": "Centered vertical stack. Title in Cormorant Garamond, subtle glowing subtitle.",
+      "buttons": "Minimalist text buttons with 1px bottom border that expands on hover. No bulky boxes."
+    },
+    "chapter_map": {
+      "layout": "Radial/Spiral arrangement using absolute positioning or a staggered masonry bento grid. Unlocked stages glow gold, locked stages are muted ash."
+    },
+    "dialogue_box": {
+      "layout": "Bottom-center anchored. Wide but not full width (max-w-3xl). Glassmorphism background. Speaker name in serif, dialogue text in Outfit.",
+      "interactions": "Click to advance. Micro-animation: text fades in gently."
+    },
+    "choice_cards": {
+      "layout": "Horizontal row or vertical stack above dialogue box. 1px borders, subtle gradients on hover based on the emotion tag."
+    },
+    "heart_lantern_meter": {
+      "visuals": "Not a standard health bar. A circular or soft organic shape in top-left or top-right. Uses CSS radial-gradient to simulate a pulsing, breathing light."
+    },
+    "mirror_lens": {
+      "visuals": "A toggle button that applies a screen-wide CSS filter (like backdrop-sepia or backdrop-hue-rotate) to the game canvas, revealing hidden glowing text."
+    },
+    "journal_screen": {
+      "layout": "Book-like or split-screen overlay. Left side: Chapter title and reflection prompt. Right side: Minimalist text area (Shadcn customized) for user input."
+    }
+  },
+  "motion_and_interaction": {
+    "transitions": "All state changes should use slow, filmic fades (transition-opacity duration-700).",
+    "hover_states": "Buttons and cards should slightly lift (-translate-y-1) and increase border glow, rather than filling with solid color.",
+    "lantern_breathing": "Use CSS @keyframes for a continuous 'breathe' effect on the lantern meter (scaling 0.95 to 1.05 and opacity 0.8 to 1.0)."
+  },
+  "icons": {
+    "library": "lucide-react",
+    "usage": "Use sparingly. Feather-light stroke widths (strokeWidth={1.5})."
+  },
+  "media": {
+    "background_wasteland": {
+      "url": "https://images.unsplash.com/photo-1613268791698-216600e380e9?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NDh8MHwxfHNlYXJjaHwxfHxncmV5JTIwbWlzdHklMjB3YXN0ZWxhbmQlMjBsYW5kc2NhcGV8ZW58MHx8fHwxNzgwOTM1MzM4fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Grey misty wasteland for Title Screen or Journal background layer."
+    },
+    "heart_lantern_reference": {
+      "url": "https://images.unsplash.com/photo-1501471984908-815b996862f4?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTZ8MHwxfHNlYXJjaHwxfHxnbG93aW5nJTIwbGFudGVybiUyMGRhcmslMjBiYWNrZ3JvdW5kfGVufDB8fHx8MTc4MDkzNTMzOHww&ixlib=rb-4.1.0&q=85",
+      "description": "Visual reference for the warm golden glow of the lantern against the dark void."
+    },
+    "kavi_firefly_reference": {
+      "url": "https://images.unsplash.com/photo-1661010854520-32ab127f1783?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MjJ8MHwxfHNlYXJjaHwxfHxteXN0aWNhbCUyMGZpcmVmbHklMjBnbG93aW5nfGVufDB8fHx8MTc4MDkzNTMzOHww&ixlib=rb-4.1.0&q=85",
+      "description": "Reference for Kavi, the firefly companion."
+    }
+  },
+  "instructions_to_main_agent": {
+    "1": "Project setup constraint: The codebase uses .js and .jsx files, NOT TypeScript. Do not create .tsx files.",
+    "2": "Initialize a React overlay on top of the Phaser 3 canvas. Phaser handles the world, React handles the narrative UI.",
+    "3": "Every interactive element (buttons, choice cards, journal input, map nodes) MUST have a `data-testid` attribute in kebab-case based on role (e.g., `data-testid=\"start-game-button\"`).",
+    "4": "For the mobile touch controls, create circular, semi-transparent buttons in the bottom corners with pointer-events-auto.",
+    "5": "Do not use standard Shadcn cards. Strip all default borders/shadows and apply the 'Crystal' glassmorphism styling.",
+    "6": "Phaser game should start heavily desaturated. UI elements provide the only color (Gold/Amber) initially."
+  }
+}
