@@ -1,4 +1,4 @@
-import { Eye, BookOpen, Sparkles } from "lucide-react";
+import { Eye, BookOpen, Sparkles, Volume2, VolumeX } from "lucide-react";
 import { useGameStore } from "@/game/useGameStore";
 
 export default function HUD({
@@ -9,6 +9,8 @@ export default function HUD({
     onOpenJournal,
     onBackToMap,
     hint,
+    muted,
+    onToggleMute,
 }) {
     const state = useGameStore();
     const lanternPct = Math.round(state.lantern * 100);
@@ -73,6 +75,19 @@ export default function HUD({
                     >
                         <Sparkles size={14} strokeWidth={1.5} />
                         <span>Map</span>
+                    </button>
+                    <button
+                        onClick={onToggleMute}
+                        data-testid="mute-button"
+                        aria-label={muted ? "Unmute audio" : "Mute audio"}
+                        className={`crystal px-3 py-2 rounded-sm flex items-center gap-2 text-xs uppercase tracking-[0.25em] transition-all duration-300 ${muted ? "text-neutral-500 hover:text-amber-200" : "text-amber-200/90 hover:text-amber-100"}`}
+                    >
+                        {muted ? (
+                            <VolumeX size={14} strokeWidth={1.5} />
+                        ) : (
+                            <Volume2 size={14} strokeWidth={1.5} />
+                        )}
+                        <span>{muted ? "Muted" : "Sound"}</span>
                     </button>
                 </div>
             </div>

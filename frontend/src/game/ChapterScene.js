@@ -276,6 +276,12 @@ export default class ChapterScene extends Phaser.Scene {
             cont.kind = "pulse";
             cont.collected = false;
             cont.idx = idx;
+            this._attachMirrorLabels(
+                cont,
+                "Faint pulse",
+                "Hope still present",
+                -32
+            );
             this.worldLayer.add(cont);
             this.pulses.push(cont);
         });
@@ -314,6 +320,12 @@ export default class ChapterScene extends Phaser.Scene {
             cont.idx = idx;
             cont.active = idx === 0;
             cont.setAlpha(idx === 0 ? 1 : 0.2);
+            this._attachMirrorLabels(
+                cont,
+                "Echo",
+                "The call, remembered",
+                -38
+            );
             this.worldLayer.add(cont);
             this.trailPulses.push(cont);
         });
@@ -345,6 +357,7 @@ export default class ChapterScene extends Phaser.Scene {
             fontStyle: "italic",
         });
         muralHidden.setOrigin(0.5, 1).setAlpha(0).setBlendMode(Phaser.BlendModes.ADD);
+        muralHidden._baseY = -88;
         const muralHalo = this.add.circle(0, -70, 34, 0xfadb5f, 0);
         muralHalo.setBlendMode(Phaser.BlendModes.ADD);
         mural.add([muralHalo, muralSurface, muralHidden]);
@@ -403,6 +416,7 @@ export default class ChapterScene extends Phaser.Scene {
             fontStyle: "italic",
         });
         taraHidden.setOrigin(0.5, 1).setAlpha(0).setBlendMode(Phaser.BlendModes.ADD);
+        taraHidden._baseY = -80;
         const taraMirrorHalo = this.add.circle(0, -60, 36, 0xfadb5f, 0);
         taraMirrorHalo.setBlendMode(Phaser.BlendModes.ADD);
         tara.add([taraMirrorHalo, taraSurface, taraHidden]);
@@ -499,6 +513,7 @@ export default class ChapterScene extends Phaser.Scene {
             fontStyle: "italic",
         });
         twinHidden.setOrigin(0.5, 1).setAlpha(0).setBlendMode(Phaser.BlendModes.ADD);
+        twinHidden._baseY = -80;
         const twinMirrorHalo = this.add.circle(0, -60, 36, 0xfadb5f, 0);
         twinMirrorHalo.setBlendMode(Phaser.BlendModes.ADD);
         twin.add([twinMirrorHalo, twinSurface, twinHidden]);
@@ -571,6 +586,30 @@ export default class ChapterScene extends Phaser.Scene {
     // ------------------------------------------------------------------
     // Helpers
     // ------------------------------------------------------------------
+    _attachMirrorLabels(cont, surfaceText, hiddenText, yOffset = -36) {
+        const surface = this.add.text(0, yOffset, surfaceText, {
+            fontFamily: "Outfit, sans-serif",
+            fontSize: "10px",
+            color: "#9a9a9a",
+            fontStyle: "italic",
+        });
+        surface.setOrigin(0.5, 1).setAlpha(0.7);
+        const hidden = this.add.text(0, yOffset, hiddenText, {
+            fontFamily: "Cormorant Garamond, serif",
+            fontSize: "14px",
+            color: "#fadb5f",
+            fontStyle: "italic",
+        });
+        hidden.setOrigin(0.5, 1).setAlpha(0).setBlendMode(Phaser.BlendModes.ADD);
+        hidden._baseY = yOffset;
+        const halo = this.add.circle(0, yOffset - 6, 22, 0xfadb5f, 0);
+        halo.setBlendMode(Phaser.BlendModes.ADD);
+        cont.add([halo, surface, hidden]);
+        cont.surfaceLabel = surface;
+        cont.hiddenLabel = hidden;
+        cont.mirrorHalo = halo;
+    }
+
     _makeNpc(x, y, label, labels = {}) {
         const cont = this.add.container(x, y);
         const body = this.add.graphics();
@@ -605,6 +644,7 @@ export default class ChapterScene extends Phaser.Scene {
         hidden.setOrigin(0.5, 1);
         hidden.setAlpha(0);
         hidden.setBlendMode(Phaser.BlendModes.ADD);
+        hidden._baseY = -68;
 
         // Mirror halo behind hidden label
         const halo = this.add.circle(0, -50, 30, 0xfadb5f, 0);
@@ -635,37 +675,40 @@ export default class ChapterScene extends Phaser.Scene {
         if (this.heroLanternHalo)
             this.heroLanternHalo.setAlpha(active ? 0.45 : 0.2);
 
-        // Reveal hidden labels on every NPC with mirror data
-        const npcs = [
+        // Reveal hidden labels on every NPC, object, or pulse with mirror data
+        const targets = [
             ...(this.citizens || []),
+            ...(this.pulses || []),
+            ...(this.trailPulses || []),
             this.tara,
             this.mural,
             this.shadowTwin,
         ].filter(Boolean);
 
-        npcs.forEach((npc) => {
-            if (!npc.surfaceLabel || !npc.hiddenLabel) return;
-            // Cancel any prior tweens on the labels
+        targets.forEach((t) => {
+            if (!t.surfaceLabel || !t.hiddenLabel) return;
             this.tweens.killTweensOf([
-                npc.surfaceLabel,
-                npc.hiddenLabel,
-                npc.mirrorHalo,
+                t.surfaceLabel,
+                t.hiddenLabel,
+                t.mirrorHalo,
             ]);
             this.tweens.add({
-                targets: npc.surfaceLabel,
+                targets: t.surfaceLabel,
                 alpha: active ? 0 : 0.85,
                 duration: 350,
                 ease: "sine.out",
             });
             this.tweens.add({
-                targets: npc.hiddenLabel,
+                targets: t.hiddenLabel,
                 alpha: active ? 1 : 0,
-                y: active ? -78 : -68,
+                y: active
+                    ? (t.hiddenLabel._baseY || t.hiddenLabel.y) - 10
+                    : t.hiddenLabel._baseY || t.hiddenLabel.y,
                 duration: 500,
                 ease: "sine.out",
             });
             this.tweens.add({
-                targets: npc.mirrorHalo,
+                targets: t.mirrorHalo,
                 alpha: active ? 0.35 : 0,
                 scale: active ? 1.2 : 0.6,
                 duration: 500,

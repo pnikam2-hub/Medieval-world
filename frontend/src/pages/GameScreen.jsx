@@ -5,197 +5,17 @@ import HUD from "@/components/HUD";
 import DialogueBox from "@/components/DialogueBox";
 import MobileControls from "@/components/MobileControls";
 import MirrorOverlay from "@/components/MirrorOverlay";
-import {
-    CHAPTERS,
-    CITIZENS,
-    TARA_DIALOGUE,
-    SHADOW_DIALOGUE,
-    MURAL_DIALOGUE,
-    KAVI_DIALOGUE,
-} from "@/game/chapters";
+import { CHAPTERS } from "@/game/chapters";
 import { gameStore, useGameStore } from "@/game/useGameStore";
-import { gameEvents } from "@/game/events";
-import { playMirrorChime } from "@/game/sound";
-
-// Speaker name -> hidden emotional truth revealed under Mirror Lens
-const SPEAKER_HIDDEN_LABELS = {
-    Tara: "Myth keeper",
-    "Mural Voice": "A door, a memory",
-    "Shadow Twin": "Wounded, protective self",
-    Kavi: "Loyal companion",
-};
-
-
-const TARA_CHOICE_BLOCK =
-    TARA_DIALOGUE[TARA_DIALOGUE.length - 1].choice;
-
-function buildScript(payload) {
-    if (!payload) return null;
-    if (payload.name === "citizen") {
-        const c = CITIZENS.find((x) => x.id === payload.npcId);
-        if (!c) return null;
-        return [
-            {
-                speaker: c.label,
-                hiddenLabel: c.hiddenLabel,
-                text: c.surface,
-                kind: "speech",
-            },
-            { speaker: "You", text: c.response, kind: "speech" },
-            {
-                speaker: c.label,
-                hiddenLabel: c.hiddenLabel,
-                text: `(Beneath the surface) ${c.hidden}`,
-                kind: "speech",
-                mirrorOnly: true,
-            },
-        ];
-    }
-    if (payload.name === "mural-dialogue") {
-        return MURAL_DIALOGUE.map((line) => ({
-            ...line,
-            hiddenLabel:
-                line.speaker && SPEAKER_HIDDEN_LABELS[line.speaker]
-                    ? SPEAKER_HIDDEN_LABELS[line.speaker]
-                    : line.hiddenLabel,
-        }));
-    }
-    if (payload.name === "tara-dialogue") {
-        return [
-            ...TARA_DIALOGUE,
-            {
-                speaker: "Tara",
-                text: "Rest now. The road begins at sunrise.",
-                kind: "speech",
-            },
-        ].map((line) => ({
-            ...line,
-            hiddenLabel:
-                line.speaker && SPEAKER_HIDDEN_LABELS[line.speaker]
-                    ? SPEAKER_HIDDEN_LABELS[line.speaker]
-                    : line.hiddenLabel,
-        }));
-    }
-    if (payload.name === "kavi-dialogue") {
-        return KAVI_DIALOGUE.map((line) => ({
-            ...line,
-            hiddenLabel:
-                line.speaker && SPEAKER_HIDDEN_LABELS[line.speaker]
-                    ? SPEAKER_HIDDEN_LABELS[line.speaker]
-                    : line.hiddenLabel,
-        }));
-    }
-    if (payload.name === "shadow-dialogue") {
-        return [
-            ...SHADOW_DIALOGUE,
-            {
-                speaker: null,
-                text: "(The Shadow Twin steps aside. The fear field stirs awake.)",
-                kind: "narration",
-            },
-        ].map((line) => ({
-            ...line,
-            hiddenLabel:
-                line.speaker && SPEAKER_HIDDEN_LABELS[line.speaker]
-                    ? SPEAKER_HIDDEN_LABELS[line.speaker]
-                    : line.hiddenLabel,
-        }));
-    }
-    return null;
-}
-
-function useDialogueSequencer() {
-    const [open, setOpen] = useState(false);
-    const [speaker, setSpeaker] = useState(null);
-    const [hiddenLabel, setHiddenLabel] = useState(null);
-    const [text, setText] = useState("");
-    const [kind, setKind] = useState("speech");
-    const [choices, setChoices] = useState(null);
-    const [choicePrompt, setChoicePrompt] = useState(null);
-    const queueRef = useRef([]);
-    const onCloseRef = useRef(null);
-
-    const closeDialogue = useCallback(() => {
-        setOpen(false);
-        setChoices(null);
-        setChoicePrompt(null);
-        setText("");
-        setSpeaker(null);
-        setHiddenLabel(null);
-        gameEvents.emit("dialogue:done");
-        gameEvents.emit("scene:dialogue-lock", false);
-        const cb = onCloseRef.current;
-        onCloseRef.current = null;
-        if (cb) cb();
-    }, []);
-
-    const advance = useCallback(() => {
-        const queue = queueRef.current;
-        if (queue.length === 0) {
-            closeDialogue();
-            return;
-        }
-        const next = queue.shift();
-        setSpeaker(next.speaker || null);
-        setHiddenLabel(next.hiddenLabel || null);
-        setText(next.text);
-        setKind(next.kind || "speech");
-        if (next.choice) {
-            setChoices(next.choice.options);
-            setChoicePrompt(next.choice.prompt);
-        } else {
-            setChoices(null);
-            setChoicePrompt(null);
-        }
-        setOpen(true);
-        gameEvents.emit("scene:dialogue-lock", true);
-    }, [closeDialogue]);
-
-    const choose = useCallback((option) => {
-        if (option.lantern) gameStore.adjustLantern(option.lantern);
-        setChoices(null);
-        setChoicePrompt(null);
-        setSpeaker("Tara");
-        setHiddenLabel(SPEAKER_HIDDEN_LABELS.Tara);
-        setKind("speech");
-        setText(option.outcome);
-
-        if (!option.advance) {
-            // Re-offer choices on next advance
-            queueRef.current.unshift({
-                speaker: "Tara",
-                hiddenLabel: SPEAKER_HIDDEN_LABELS.Tara,
-                text: "Try again. Speak from the honest place.",
-                choice: TARA_CHOICE_BLOCK,
-            });
-        } else {
-            gameStore.unlockQuality("truthful-response");
-        }
-    }, []);
-
-    const enqueue = useCallback(
-        (lines, onClose) => {
-            queueRef.current = [...lines];
-            onCloseRef.current = onClose || null;
-            advance();
-        },
-        [advance]
-    );
-
-    return {
-        open,
-        speaker,
-        hiddenLabel,
-        text,
-        kind,
-        choices,
-        choicePrompt,
-        advance,
-        choose,
-        enqueue,
-        canAdvance: !choices,
-    };
-}
+import { useDialogueSequencer } from "@/game/useDialogueSequencer";
+import { useChapterEvents } from "@/game/useChapterEvents";
+import {
+    playMirrorChime,
+    startAmbient,
+    stopAmbient,
+    isMuted,
+    toggleMuted,
+} from "@/game/sound";
 
 export default function GameScreen() {
     const { chapterId } = useParams();
@@ -207,7 +27,8 @@ export default function GameScreen() {
     const [mirrorActive, setMirrorActive] = useState(false);
     const [showTooltip, setShowTooltip] = useState(false);
     const [hint, setHint] = useState(null);
-    const hintTimerRef = useRef(null);
+    const [muted, setMutedState] = useState(isMuted());
+
     const mirrorRef = useRef(mirrorActive);
     const completedRef = useRef(false);
 
@@ -216,16 +37,13 @@ export default function GameScreen() {
     dialogueRef.current = dialogue;
     mirrorRef.current = mirrorActive;
 
-    // Show first-use Mirror Lens tooltip the first time it is activated.
-    // Single source of truth used by both the M-key handler and HUD button.
+    // Single source of truth for Mirror Lens toggle (M-key + HUD + mobile).
     const toggleMirror = useCallback(() => {
         const next = !mirrorActive;
         const tooltipShown = gameStore.get().mirrorLensTooltipShown;
         setMirrorActive(next);
         playMirrorChime(next ? "on" : "off");
-        if (next && !tooltipShown) {
-            setShowTooltip(true);
-        }
+        if (next && !tooltipShown) setShowTooltip(true);
     }, [mirrorActive]);
 
     const dismissTooltip = useCallback(() => {
@@ -233,104 +51,39 @@ export default function GameScreen() {
         setShowTooltip(false);
     }, []);
 
-    // Mount: set current chapter, reset completed flag
+    const handleToggleMute = useCallback(() => {
+        const next = toggleMuted();
+        setMutedState(next);
+    }, []);
+
+    // Persist current chapter and reset per-chapter completion guard
     useEffect(() => {
         gameStore.set({ currentChapter: id });
         completedRef.current = false;
     }, [id]);
 
-    // Listen to Phaser-driven events
+    // Ambient drone for the duration of the game screen
     useEffect(() => {
-        const offOpen = gameEvents.on("dialogue:open", (payload) => {
-            dialogueRef.current.enqueue([
-                {
-                    speaker: payload.speaker,
-                    text: payload.text,
-                    kind: payload.kind || "speech",
-                },
-            ]);
-        });
-
-        const offScript = gameEvents.on("script:start", (payload) => {
-            let lines = buildScript(payload);
-            if (!lines || lines.length === 0) return;
-            // Drop mirror-only lines if Mirror Lens is currently off
-            if (!mirrorRef.current) {
-                lines = lines.filter((l) => !l.mirrorOnly);
-            }
-
-            let onClose = null;
-            if (payload.name === "tara-dialogue") {
-                onClose = () => {
-                    setTimeout(() => {
-                        const s = gameStore.get();
-                        if (
-                            s.unlockedQualities.includes("truthful-response") &&
-                            !completedRef.current
-                        ) {
-                            completedRef.current = true;
-                            gameEvents.emit("chapter:complete", {
-                                chapterId: 3,
-                            });
-                        }
-                    }, 200);
-                };
-            } else if (payload.name === "shadow-dialogue") {
-                onClose = () => {
-                    gameEvents.emit("fear:trial-start");
-                };
-            }
-            dialogueRef.current.enqueue(lines, onClose);
-        });
-
-        const offComplete = gameEvents.on("chapter:complete", ({ chapterId }) => {
-            completedRef.current = true;
-            gameStore.completeChapter(chapterId);
-            gameStore.adjustLantern(0.18);
-            if (chapterId === 5) gameStore.unlockQuality("presence");
-
-            const ch = CHAPTERS.find((c) => c.id === chapterId);
-            dialogueRef.current.enqueue(
-                [
-                    {
-                        speaker: null,
-                        text: ch.endText,
-                        kind: "narration",
-                    },
-                ],
-                () => navigate(`/journal/${chapterId}`)
-            );
-        });
-
-        const offHint = gameEvents.on("hud:hint", (text) => {
-            setHint(text);
-            if (hintTimerRef.current) clearTimeout(hintTimerRef.current);
-            hintTimerRef.current = setTimeout(() => setHint(null), 4200);
-        });
-
-        const offLantern = gameEvents.on("lantern:adjust", (delta) => {
-            gameStore.adjustLantern(delta);
-        });
-
+        startAmbient();
         return () => {
-            offOpen();
-            offScript();
-            offComplete();
-            offHint();
-            offLantern();
-            if (hintTimerRef.current) clearTimeout(hintTimerRef.current);
+            stopAmbient();
         };
-    }, [navigate]);
+    }, []);
+
+    // Wire all gameEvents (dialogue, hint, lantern, completion, fx)
+    useChapterEvents({
+        setHint,
+        dialogueRef,
+        mirrorRef,
+        completedRef,
+        navigate,
+    });
 
     // Keyboard: M = mirror, J = journal
     useEffect(() => {
         const handler = (e) => {
-            if (e.code === "KeyM") {
-                toggleMirror();
-            }
-            if (e.code === "KeyJ") {
-                navigate(`/journal/${id}`);
-            }
+            if (e.code === "KeyM") toggleMirror();
+            if (e.code === "KeyJ") navigate(`/journal/${id}`);
         };
         window.addEventListener("keydown", handler);
         return () => window.removeEventListener("keydown", handler);
@@ -374,6 +127,8 @@ export default function GameScreen() {
                 onOpenJournal={() => navigate(`/journal/${id}`)}
                 onBackToMap={() => navigate("/map")}
                 hint={hint}
+                muted={muted}
+                onToggleMute={handleToggleMute}
             />
 
             <MirrorOverlay
