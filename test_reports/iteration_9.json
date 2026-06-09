@@ -1,0 +1,26 @@
+{
+  "summary": "Iteration 9 frontend verification PASSED 100% on all acceptance checks for the two refactors: (1) DevSection extracted into its own component file — same data-testids, same conditional visibility via isDevMode(), correct chapter ambient labels (Ch1/2='wasteland', Ch3='cave', Ch4='road', Ch5='fear'), correct aria-pressed on active chapter, chapter-jump navigates + closes panel; (2) ThresholdCard pre-renders on first paint via useEffect+rAF — window.__svgRasterCount reaches 1 within 2.5s of mount (silent pre-warm), the first user Download click is a cache hit (count stays at 1) and produces heartbound-threshold-mira.png with button transitioning to 'Saved'. Cache invalidation on hero name change (Mira → Arin) re-warms with new cacheKey and the subsequent download is again a cache hit producing heartbound-threshold-arin.png. threshold-card-fallback briefly shows then is replaced by threshold-card (Suspense lazy load works). SVG textContent contains all four required strings: 'CHAPTER V · FEAR', 'First threshold crossed', 'for Mira', 'ANTARA · EMBER LANTERN'. Regression: 10 routes (/, /character, /map, /game/1..5, /journal/1, /threshold) all load with ZERO console/page errors. ?dev=0 clears localStorage flag and hides settings-dev-section.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/test_reports/iteration_9.json"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "DevSection.jsx: clean extraction — props (currentChapterId, onJumpToChapter) are correctly threaded; CHAPTER_AMBIENT_LABELS map is local and immutable. Good.",
+    "SettingsPanel.jsx: dropped from ~205 to 157 lines after extraction — better single-responsibility. Still imports isDevMode directly so the gate stays at the panel level (correct).",
+    "ThresholdCard.jsx: useEffect with rAF for pre-warm is correctly deps'd on [cacheKey] — re-warms when heroName/accent/quote change. cancelled flag + cancelAnimationFrame correctly handle unmount mid-warm. Errors are silently swallowed so the user-initiated click path retries — matches spec.",
+    "ThresholdCard.jsx (carry-over from iter 8): cache invalidation (lines 48-50) still runs in render body as a ref-mutation side-effect. Functionally correct but consider migrating to useMemo or moving check into getPngBlob() for stricter React purity. Non-blocking.",
+    "Minor: getPngBlobRef pattern (lines 109-110) is good for accessing the latest closure inside rAF callback — avoids stale-closure bugs when inputs change between mount and rAF firing."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100%"},
+  "test_credentials": "none required",
+  "seed_data_creation": "Seeded localStorage.heartbound.save.v1 = {hero:{name:'Mira',accent:'ember'},completedChapters:[1..5]} then mutated to name='Arin' for cache-invalidation test. Cleaned via localStorage.clear() between phases. ?dev=1 enabled dev mode; ?dev=0 cleared it.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Frontend-only testing. Pre-warm verification pattern: install URL.createObjectURL spy via page.add_init_script BEFORE goto, counting blobs with type starting 'image/svg'. Navigate to /threshold, wait ~2.5s for rAF + image.onload + canvas.toBlob to complete, then read window.__svgRasterCount. Should equal 1 after pre-warm; user Download click should keep it at 1 (cache hit); changing heroName/accent/quote and remounting bumps the counter again. NOTE: using inner_html for SVG content assertions can fail because React inserts comment markers between dynamic text nodes — prefer textContent (page.text_content) for substring checks on dynamic SVG text.",
+  "rca of the issue": "No issues. Both refactors implemented correctly per spec. Initial test substring miss on inner_html was diagnosed as React comment markers between dynamic text nodes — confirmed via textContent that all 4 required SVG strings ('CHAPTER V · FEAR', 'First threshold crossed', 'for Mira', 'ANTARA · EMBER LANTERN') are present in the DOM. Download filename heartbound-threshold-mira.png further confirms heroName flows correctly through the cacheKey and PNG export path."
+}

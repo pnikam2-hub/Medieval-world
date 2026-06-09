@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Volume2, VolumeX, X } from "lucide-react";
 import { isDevMode } from "@/game/devMode";
+import DevSection from "@/components/DevSection";
 
 const TEXT_SIZES = [
     { id: "sm", label: "Small" },
@@ -8,19 +9,10 @@ const TEXT_SIZES = [
     { id: "lg", label: "Large" },
 ];
 
-const CHAPTER_AMBIENT_LABELS = {
-    1: "wasteland",
-    2: "wasteland",
-    3: "cave",
-    4: "road",
-    5: "fear",
-};
-
 /**
  * Small floating settings panel anchored under the HUD trigger.
  * Contains: mute toggle, volume slider, journal text-size selector.
- * Optionally exposes a dev-only About section (chapter ambient variant +
- * jump tools) when ?dev=1 has been visited at least once.
+ * Optionally renders a dev-only <DevSection /> when isDevMode() is true.
  * Dismisses on Escape, click outside, or close button.
  */
 export default function SettingsPanel({
@@ -155,47 +147,10 @@ export default function SettingsPanel({
             </p>
 
             {isDevMode() && (
-                <div
-                    className="mt-5 pt-4 border-t border-amber-400/15"
-                    data-testid="settings-dev-section"
-                >
-                    <p className="text-[10px] uppercase tracking-[0.3em] text-amber-200/70 mb-1">
-                        About · Sound Design
-                    </p>
-                    <p className="text-[11px] text-neutral-400 leading-snug mb-3">
-                        Procedural Web Audio score &mdash; warm drone, heartbeat,
-                        chimes &mdash; routed through a single master gain.
-                        Current chapter ambient:{" "}
-                        <span
-                            className="text-amber-200 font-mythic italic"
-                            data-testid="settings-current-ambient"
-                        >
-                            {CHAPTER_AMBIENT_LABELS[currentChapterId] || "default"}
-                        </span>
-                    </p>
-                    <p className="text-[10px] uppercase tracking-[0.3em] text-neutral-500 mb-2">
-                        Dev · Jump to chapter
-                    </p>
-                    <div
-                        className="grid grid-cols-5 gap-1"
-                        data-testid="settings-dev-chapter-jump"
-                    >
-                        {[1, 2, 3, 4, 5].map((c) => (
-                            <button
-                                key={c}
-                                onClick={() => onJumpToChapter?.(c)}
-                                data-testid={`settings-dev-jump-${c}`}
-                                aria-pressed={c === currentChapterId}
-                                className={`px-2 py-1 rounded-sm border text-[10px] uppercase tracking-[0.15em] transition-colors ${c === currentChapterId ? "border-amber-400/70 text-amber-200" : "border-white/10 text-neutral-400 hover:border-amber-400/40 hover:text-amber-200"}`}
-                            >
-                                Ch {c}
-                            </button>
-                        ))}
-                    </div>
-                    <p className="text-[10px] uppercase tracking-[0.25em] text-neutral-600 mt-3 font-mythic italic">
-                        Dev mode active &middot; visit ?dev=0 to disable
-                    </p>
-                </div>
+                <DevSection
+                    currentChapterId={currentChapterId}
+                    onJumpToChapter={onJumpToChapter}
+                />
             )}
         </div>
     );

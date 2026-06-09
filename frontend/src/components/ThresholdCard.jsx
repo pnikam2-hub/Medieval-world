@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Download, Share2, Check } from "lucide-react";
 
 function splitQuoteLines(quote) {
@@ -102,6 +102,25 @@ export default function ThresholdCard({ heroName, accent = "gold", quote }) {
         pngCacheRef.current = { key: cacheKey, blob };
         return blob;
     };
+
+    // Pre-warm the PNG cache on first paint so the very first Download / Share
+    // click is instant. The warm-up is silent — any error falls back to the
+    // on-click rasterize path.
+    const getPngBlobRef = useRef(getPngBlob);
+    getPngBlobRef.current = getPngBlob;
+    useEffect(() => {
+        let cancelled = false;
+        const id = requestAnimationFrame(() => {
+            if (cancelled || !svgRef.current) return;
+            getPngBlobRef.current().catch(() => {
+                // silent — user-initiated click will retry
+            });
+        });
+        return () => {
+            cancelled = true;
+            cancelAnimationFrame(id);
+        };
+    }, [cacheKey]);
 
     const download = async () => {
         try {
