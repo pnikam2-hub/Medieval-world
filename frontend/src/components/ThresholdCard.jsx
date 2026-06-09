@@ -1,6 +1,26 @@
 import { useRef, useState } from "react";
 import { Download, Share2, Check } from "lucide-react";
 
+function splitQuoteLines(quote) {
+    if (!quote) return [""];
+    // Prefer a natural pause at ". "
+    const dotIdx = quote.indexOf(". ");
+    if (dotIdx > 8 && dotIdx < quote.length - 6) {
+        return [quote.slice(0, dotIdx + 1), quote.slice(dotIdx + 2)];
+    }
+    // Fallback: simple word-wrap by character width
+    const max = 44;
+    const words = quote.split(" ");
+    const lines = [""];
+    for (const w of words) {
+        const cur = lines[lines.length - 1];
+        const candidate = cur ? cur + " " + w : w;
+        if (candidate.length <= max) lines[lines.length - 1] = candidate;
+        else lines.push(w);
+    }
+    return lines;
+}
+
 const ACCENTS = {
     gold: { hex: "#fadb5f", soft: "#d4af37", name: "Gold" },
     ember: { hex: "#fb8500", soft: "#c2410c", name: "Ember" },
@@ -17,7 +37,7 @@ const H = 1350;
  */
 export default function ThresholdCard({ heroName, accent = "gold", quote }) {
     const svgRef = useRef(null);
-    const [shareState, setShareState] = useState("idle"); // idle | working | done
+    const [shareState, setShareState] = useState("idle"); // idle | working | done | error
 
     const palette = ACCENTS[accent] || ACCENTS.gold;
     const safeName = (heroName || "Hero").slice(0, 22);
@@ -77,7 +97,8 @@ export default function ThresholdCard({ heroName, accent = "gold", quote }) {
             setShareState("done");
             setTimeout(() => setShareState("idle"), 1800);
         } catch (e) {
-            setShareState("idle");
+            setShareState("error");
+            setTimeout(() => setShareState("idle"), 2400);
         }
     };
 
@@ -114,7 +135,8 @@ export default function ThresholdCard({ heroName, accent = "gold", quote }) {
             setShareState("done");
             setTimeout(() => setShareState("idle"), 1800);
         } catch (e) {
-            setShareState("idle");
+            setShareState("error");
+            setTimeout(() => setShareState("idle"), 2400);
         }
     };
 
@@ -249,23 +271,36 @@ export default function ThresholdCard({ heroName, accent = "gold", quote }) {
                         for {safeName}
                     </text>
 
-                    {/* Quote */}
-                    <foreignObject x={120} y={1130} width={W - 240} height={140}>
-                        <div
-                            xmlns="http://www.w3.org/1999/xhtml"
-                            style={{
-                                fontFamily: "Cormorant Garamond, serif",
-                                fontStyle: "italic",
-                                fontSize: "30px",
-                                color: "#e5e5e5",
-                                textAlign: "center",
-                                lineHeight: 1.35,
-                                opacity: 0.92,
-                            }}
-                        >
-                            &ldquo;{quote}&rdquo;
-                        </div>
-                    </foreignObject>
+                    {/* Quote — native SVG text only (no foreignObject) so the
+                        canvas stays untainted and toBlob can export PNG */}
+                    {(() => {
+                        const lines = splitQuoteLines(quote);
+                        const startY = 1170;
+                        const lineH = 44;
+                        return (
+                            <text
+                                x={W / 2}
+                                y={startY}
+                                textAnchor="middle"
+                                fontFamily="Cormorant Garamond, serif"
+                                fontStyle="italic"
+                                fontSize="30"
+                                fill="#e5e5e5"
+                                opacity="0.92"
+                            >
+                                {lines.map((ln, i) => (
+                                    <tspan
+                                        key={i}
+                                        x={W / 2}
+                                        dy={i === 0 ? 0 : lineH}
+                                    >
+                                        {i === 0 ? `\u201C${ln}` : ln}
+                                        {i === lines.length - 1 ? "\u201D" : ""}
+                                    </tspan>
+                                ))}
+                            </text>
+                        );
+                    })()}
 
                     {/* Footer mark */}
                     <text
@@ -299,9 +334,11 @@ export default function ThresholdCard({ heroName, accent = "gold", quote }) {
                     <span>
                         {shareState === "done"
                             ? "Saved"
-                            : shareState === "working"
-                              ? "Rendering"
-                              : "Download PNG"}
+                            : shareState === "error"
+                              ? "Failed — try again"
+                              : shareState === "working"
+                                ? "Rendering"
+                                : "Download PNG"}
                     </span>
                 </button>
                 <button

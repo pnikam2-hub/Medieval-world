@@ -1,0 +1,25 @@
+{
+  "summary": "Iteration 6 — frontend-only retest of Threshold card download/share after switching from <foreignObject>+HTML to native SVG <text>/<tspan>. All targeted checks PASSED: no <foreignObject> in the SVG; quote is split into two <tspan>s at the natural '. ' pause (line 1 ends with 'disappearing.', line 2 ends with 'fear.”' with the leading curly quote on line 1 and trailing curly quote on line 2); PNG download succeeds without SecurityError, file name matches /^heartbound-threshold-mira\\.png$/i, share fallback download fires with name 'heartbound-threshold.png', three repeated downloads all succeed and the button correctly resets to 'Download PNG' between them; no pageerror, no console errors. All regression strings present: 'CHAPTER V · FEAR', 'First threshold crossed', 'for Mira', 'ANTARA · EMBER LANTERN', and both quote sentences. Sanity: window.__heartboundEmit is a function.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "ThresholdCard.jsx svgToPngBlob(): img.crossOrigin='anonymous' is set on a blob: URL; it is a no-op for same-origin blob URLs but harmless. No remote/raster images are embedded in the SVG, so the canvas remains untainted — fix is correct.",
+    "Share button is disabled only while shareState==='working'; when shareState==='error' the label only updates on the download button (the share button keeps showing 'Share'). Consider unifying error feedback so users who triggered share also see the 'Failed — try again' state.",
+    "splitQuoteLines() uses indexOf('. ') with a minimum index of 8. Works for the current quote, but a longer first clause (e.g. starts with the curly quote so dotIdx is shifted) is fine here; just be aware the heuristic is content-specific.",
+    "Note for next testing agent: the localStorage seed shape suggested in the review request (separate keys 'heartbound:hero', 'heartbound:accent', 'heartbound:completedChapters') does NOT match the app's actual schema. The store persists a single JSON blob under key 'heartbound.save.v1' with shape { hero:{preset,name,accent}, completedChapters:[...], ... }. Seeding the wrong keys leaves the default hero ('Arin', gold) — which initially made it look like a name/accent bug. Using the correct key reproduces the expected 'Mira' / 'ember' card."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100%"},
+  "test_credentials": "none required",
+  "seed_data_creation": "Set localStorage['heartbound.save.v1'] = JSON.stringify({ hero:{preset:'arin',name:'Mira',accent:'ember'}, lantern:0.95, currentChapter:5, completedChapters:[1,2,3,4,5], journal:{}, unlockedQualities:[], mirrorLensUnlocked:true, mirrorLensTooltipShown:true, hasSave:true }) before navigating to /threshold.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "The canvas-taint bug is fully resolved. ThresholdCard now uses native SVG <text>/<tspan> for the quote (no <foreignObject>), so toBlob() succeeds in Chromium. Filename is derived from hero name via safeName.toLowerCase().replace(/\\s+/g,'-'). When seeding localStorage to simulate progress, use the single-key schema 'heartbound.save.v1' as described in seed_data_creation; the per-field key form used in the review prompt is incorrect for this app.",
+  "rca of the issue": "Previous iteration: canvas became tainted because <foreignObject> with inline HTML was rasterised through an SVG-as-Image pipeline; Chromium treats that as cross-origin, so canvas.toBlob() threw SecurityError. Fix replaced inline HTML with native SVG <text> + two <tspan> children split at '. '. Verified: hasForeignObject=false, tspans=['“The first victory is not fear disappearing.', 'It is you no longer disappearing inside fear.”'], toBlob() returns a valid PNG, downloads succeed 4/4 times in this run with no SecurityError or pageerror."
+}
