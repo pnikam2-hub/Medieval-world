@@ -348,7 +348,9 @@ export default function ThresholdCard({ heroName, accent = "gold", quote }) {
                     className="crystal rounded-sm px-4 py-2 flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-neutral-300 hover:text-amber-200 transition-all duration-300 disabled:opacity-60"
                 >
                     <Share2 size={14} strokeWidth={1.5} />
-                    <span>Share</span>
+                    <span>
+                        {shareState === "error" ? "Failed — try again" : "Share"}
+                    </span>
                 </button>
             </div>
         </div>
