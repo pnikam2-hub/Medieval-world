@@ -160,6 +160,11 @@ export default function GameScreen() {
                 onChangeVolume={handleChangeVolume}
                 journalTextSize={state.journalTextSize}
                 onChangeJournalTextSize={handleChangeJournalTextSize}
+                currentChapterId={id}
+                onJumpToChapter={(c) => {
+                    setSettingsOpen(false);
+                    navigate(`/game/${c}`);
+                }}
             />
 
             <MirrorOverlay

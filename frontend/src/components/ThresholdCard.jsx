@@ -37,10 +37,17 @@ const H = 1350;
  */
 export default function ThresholdCard({ heroName, accent = "gold", quote }) {
     const svgRef = useRef(null);
+    const pngCacheRef = useRef({ key: null, blob: null });
     const [shareState, setShareState] = useState("idle"); // idle | working | done | error
 
     const palette = ACCENTS[accent] || ACCENTS.gold;
     const safeName = (heroName || "Hero").slice(0, 22);
+    const cacheKey = `${safeName}|${accent}|${quote}`;
+
+    // Invalidate cache when key inputs change
+    if (pngCacheRef.current.key && pngCacheRef.current.key !== cacheKey) {
+        pngCacheRef.current = { key: null, blob: null };
+    }
 
     const renderSvgString = () => {
         const node = svgRef.current;
@@ -82,10 +89,24 @@ export default function ThresholdCard({ heroName, accent = "gold", quote }) {
             img.src = url;
         });
 
+    // Returns the cached blob if its key matches the current inputs,
+    // otherwise rasterizes and caches.
+    const getPngBlob = async () => {
+        if (
+            pngCacheRef.current.key === cacheKey &&
+            pngCacheRef.current.blob
+        ) {
+            return pngCacheRef.current.blob;
+        }
+        const blob = await svgToPngBlob();
+        pngCacheRef.current = { key: cacheKey, blob };
+        return blob;
+    };
+
     const download = async () => {
         try {
             setShareState("working");
-            const blob = await svgToPngBlob();
+            const blob = await getPngBlob();
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
@@ -105,7 +126,7 @@ export default function ThresholdCard({ heroName, accent = "gold", quote }) {
     const share = async () => {
         try {
             setShareState("working");
-            const blob = await svgToPngBlob();
+            const blob = await getPngBlob();
             const file = new File([blob], "heartbound-threshold.png", {
                 type: "image/png",
             });
@@ -123,7 +144,6 @@ export default function ThresholdCard({ heroName, accent = "gold", quote }) {
                 setTimeout(() => setShareState("idle"), 1800);
                 return;
             }
-            // Fallback: download
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
