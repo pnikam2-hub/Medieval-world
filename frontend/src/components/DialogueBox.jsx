@@ -3,6 +3,8 @@ import { useEffect } from "react";
 export default function DialogueBox({
     open,
     speaker,
+    hiddenLabel,
+    mirrorActive,
     text,
     kind,
     canAdvance,
@@ -25,6 +27,8 @@ export default function DialogueBox({
     }, [open, onAdvance, choices]);
 
     if (!open) return null;
+
+    const showHidden = mirrorActive && hiddenLabel && speaker;
 
     return (
         <div
@@ -66,17 +70,28 @@ export default function DialogueBox({
             )}
 
             <div
-                className="w-full max-w-3xl crystal rounded-sm px-5 py-4 md:px-7 md:py-5 pointer-events-auto cursor-pointer animate-reveal"
+                className={`w-full max-w-3xl crystal rounded-sm px-5 py-4 md:px-7 md:py-5 pointer-events-auto cursor-pointer animate-reveal ${mirrorActive ? "ring-1 ring-amber-400/40" : ""}`}
                 data-testid="dialogue-box"
                 onClick={() => !choices && onAdvance?.()}
             >
                 {speaker ? (
-                    <p
-                        className="text-[10px] uppercase tracking-[0.35em] text-amber-200/80 font-mythic mb-1"
-                        data-testid="dialogue-speaker"
-                    >
-                        {speaker}
-                    </p>
+                    <div className="flex items-baseline gap-3 mb-1">
+                        <p
+                            className="text-[10px] uppercase tracking-[0.35em] text-amber-200/80 font-mythic"
+                            data-testid="dialogue-speaker"
+                        >
+                            {speaker}
+                        </p>
+                        {showHidden && (
+                            <p
+                                key={hiddenLabel}
+                                className="text-[10px] uppercase tracking-[0.3em] text-amber-300 font-mythic italic animate-reveal"
+                                data-testid="dialogue-hidden-label"
+                            >
+                                · {hiddenLabel}
+                            </p>
+                        )}
+                    </div>
                 ) : (
                     <p className="text-[10px] uppercase tracking-[0.3em] text-neutral-500 mb-1 font-mythic italic">
                         {kind === "narration" ? "narration" : ""}

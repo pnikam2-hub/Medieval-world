@@ -15,30 +15,51 @@ import {
 } from "@/game/chapters";
 import { gameStore, useGameStore } from "@/game/useGameStore";
 import { gameEvents } from "@/game/events";
+import { playMirrorChime } from "@/game/sound";
+
+// Speaker name -> hidden emotional truth revealed under Mirror Lens
+const SPEAKER_HIDDEN_LABELS = {
+    Tara: "Myth keeper",
+    "Mural Voice": "A door, a memory",
+    "Shadow Twin": "Wounded, protective self",
+    Kavi: "Loyal companion",
+};
 
 
 const TARA_CHOICE_BLOCK =
     TARA_DIALOGUE[TARA_DIALOGUE.length - 1].choice;
 
-function buildScript(payload, mirrorOn) {
+function buildScript(payload) {
     if (!payload) return null;
     if (payload.name === "citizen") {
         const c = CITIZENS.find((x) => x.id === payload.npcId);
         if (!c) return null;
-        const lines = [
-            { speaker: c.label, text: c.surface, kind: "speech" },
-            { speaker: "You", text: c.response, kind: "speech" },
-        ];
-        if (mirrorOn) {
-            lines.push({
+        return [
+            {
                 speaker: c.label,
-                text: `(Beneath the surface: "${c.hidden}")`,
+                hiddenLabel: c.hiddenLabel,
+                text: c.surface,
                 kind: "speech",
-            });
-        }
-        return lines;
+            },
+            { speaker: "You", text: c.response, kind: "speech" },
+            {
+                speaker: c.label,
+                hiddenLabel: c.hiddenLabel,
+                text: `(Beneath the surface) ${c.hidden}`,
+                kind: "speech",
+                mirrorOnly: true,
+            },
+        ];
     }
-    if (payload.name === "mural-dialogue") return MURAL_DIALOGUE;
+    if (payload.name === "mural-dialogue") {
+        return MURAL_DIALOGUE.map((line) => ({
+            ...line,
+            hiddenLabel:
+                line.speaker && SPEAKER_HIDDEN_LABELS[line.speaker]
+                    ? SPEAKER_HIDDEN_LABELS[line.speaker]
+                    : line.hiddenLabel,
+        }));
+    }
     if (payload.name === "tara-dialogue") {
         return [
             ...TARA_DIALOGUE,
@@ -47,9 +68,23 @@ function buildScript(payload, mirrorOn) {
                 text: "Rest now. The road begins at sunrise.",
                 kind: "speech",
             },
-        ];
+        ].map((line) => ({
+            ...line,
+            hiddenLabel:
+                line.speaker && SPEAKER_HIDDEN_LABELS[line.speaker]
+                    ? SPEAKER_HIDDEN_LABELS[line.speaker]
+                    : line.hiddenLabel,
+        }));
     }
-    if (payload.name === "kavi-dialogue") return KAVI_DIALOGUE;
+    if (payload.name === "kavi-dialogue") {
+        return KAVI_DIALOGUE.map((line) => ({
+            ...line,
+            hiddenLabel:
+                line.speaker && SPEAKER_HIDDEN_LABELS[line.speaker]
+                    ? SPEAKER_HIDDEN_LABELS[line.speaker]
+                    : line.hiddenLabel,
+        }));
+    }
     if (payload.name === "shadow-dialogue") {
         return [
             ...SHADOW_DIALOGUE,
@@ -58,7 +93,13 @@ function buildScript(payload, mirrorOn) {
                 text: "(The Shadow Twin steps aside. The fear field stirs awake.)",
                 kind: "narration",
             },
-        ];
+        ].map((line) => ({
+            ...line,
+            hiddenLabel:
+                line.speaker && SPEAKER_HIDDEN_LABELS[line.speaker]
+                    ? SPEAKER_HIDDEN_LABELS[line.speaker]
+                    : line.hiddenLabel,
+        }));
     }
     return null;
 }
@@ -66,6 +107,7 @@ function buildScript(payload, mirrorOn) {
 function useDialogueSequencer() {
     const [open, setOpen] = useState(false);
     const [speaker, setSpeaker] = useState(null);
+    const [hiddenLabel, setHiddenLabel] = useState(null);
     const [text, setText] = useState("");
     const [kind, setKind] = useState("speech");
     const [choices, setChoices] = useState(null);
@@ -79,6 +121,7 @@ function useDialogueSequencer() {
         setChoicePrompt(null);
         setText("");
         setSpeaker(null);
+        setHiddenLabel(null);
         gameEvents.emit("dialogue:done");
         gameEvents.emit("scene:dialogue-lock", false);
         const cb = onCloseRef.current;
@@ -94,6 +137,7 @@ function useDialogueSequencer() {
         }
         const next = queue.shift();
         setSpeaker(next.speaker || null);
+        setHiddenLabel(next.hiddenLabel || null);
         setText(next.text);
         setKind(next.kind || "speech");
         if (next.choice) {
@@ -112,6 +156,7 @@ function useDialogueSequencer() {
         setChoices(null);
         setChoicePrompt(null);
         setSpeaker("Tara");
+        setHiddenLabel(SPEAKER_HIDDEN_LABELS.Tara);
         setKind("speech");
         setText(option.outcome);
 
@@ -119,6 +164,7 @@ function useDialogueSequencer() {
             // Re-offer choices on next advance
             queueRef.current.unshift({
                 speaker: "Tara",
+                hiddenLabel: SPEAKER_HIDDEN_LABELS.Tara,
                 text: "Try again. Speak from the honest place.",
                 choice: TARA_CHOICE_BLOCK,
             });
@@ -139,6 +185,7 @@ function useDialogueSequencer() {
     return {
         open,
         speaker,
+        hiddenLabel,
         text,
         kind,
         choices,
@@ -169,21 +216,22 @@ export default function GameScreen() {
     dialogueRef.current = dialogue;
     mirrorRef.current = mirrorActive;
 
-    // Show first-use Mirror Lens tooltip the first time it is activated
-    const handleToggleMirror = () => {
-        setMirrorActive((v) => {
-            const next = !v;
-            if (next && !gameStore.get().mirrorLensTooltipShown) {
-                setShowTooltip(true);
-            }
-            return next;
-        });
-    };
+    // Show first-use Mirror Lens tooltip the first time it is activated.
+    // Single source of truth used by both the M-key handler and HUD button.
+    const toggleMirror = useCallback(() => {
+        const next = !mirrorActive;
+        const tooltipShown = gameStore.get().mirrorLensTooltipShown;
+        setMirrorActive(next);
+        playMirrorChime(next ? "on" : "off");
+        if (next && !tooltipShown) {
+            setShowTooltip(true);
+        }
+    }, [mirrorActive]);
 
-    const dismissTooltip = () => {
+    const dismissTooltip = useCallback(() => {
         gameStore.set({ mirrorLensTooltipShown: true });
         setShowTooltip(false);
-    };
+    }, []);
 
     // Mount: set current chapter, reset completed flag
     useEffect(() => {
@@ -204,8 +252,12 @@ export default function GameScreen() {
         });
 
         const offScript = gameEvents.on("script:start", (payload) => {
-            const lines = buildScript(payload, mirrorRef.current);
+            let lines = buildScript(payload);
             if (!lines || lines.length === 0) return;
+            // Drop mirror-only lines if Mirror Lens is currently off
+            if (!mirrorRef.current) {
+                lines = lines.filter((l) => !l.mirrorOnly);
+            }
 
             let onClose = null;
             if (payload.name === "tara-dialogue") {
@@ -274,13 +326,7 @@ export default function GameScreen() {
     useEffect(() => {
         const handler = (e) => {
             if (e.code === "KeyM") {
-                setMirrorActive((v) => {
-                    const next = !v;
-                    if (next && !gameStore.get().mirrorLensTooltipShown) {
-                        setShowTooltip(true);
-                    }
-                    return next;
-                });
+                toggleMirror();
             }
             if (e.code === "KeyJ") {
                 navigate(`/journal/${id}`);
@@ -288,7 +334,7 @@ export default function GameScreen() {
         };
         window.addEventListener("keydown", handler);
         return () => window.removeEventListener("keydown", handler);
-    }, [id, navigate]);
+    }, [id, navigate, toggleMirror]);
 
     if (!chapter) {
         return (
@@ -324,7 +370,7 @@ export default function GameScreen() {
                 chapterTitle={chapter.title}
                 chapterId={id}
                 mirrorActive={mirrorActive}
-                onToggleMirror={handleToggleMirror}
+                onToggleMirror={toggleMirror}
                 onOpenJournal={() => navigate(`/journal/${id}`)}
                 onBackToMap={() => navigate("/map")}
                 hint={hint}
@@ -339,6 +385,8 @@ export default function GameScreen() {
             <DialogueBox
                 open={dialogue.open}
                 speaker={dialogue.speaker}
+                hiddenLabel={dialogue.hiddenLabel}
+                mirrorActive={mirrorActive}
                 text={dialogue.text}
                 kind={dialogue.kind}
                 canAdvance={dialogue.canAdvance}
@@ -353,7 +401,7 @@ export default function GameScreen() {
                     const evt = new KeyboardEvent("keydown", { code: "Space" });
                     window.dispatchEvent(evt);
                 }}
-                onMirror={handleToggleMirror}
+                onMirror={toggleMirror}
                 onJournal={() => navigate(`/journal/${id}`)}
             />
         </div>
