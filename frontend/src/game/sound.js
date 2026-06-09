@@ -205,7 +205,85 @@ export function startAmbient(variant = "default") {
     bus.connect(master);
     const oscs = [];
 
-    if (variant === "cave") {
+    if (variant === "wasteland") {
+        // Hollow, sparse, muted — single very low fundamental, no warmth
+        const filter = ac.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.value = 180;
+        filter.Q.value = 0.3;
+
+        const o1 = ac.createOscillator();
+        o1.type = "sine";
+        o1.frequency.value = 49; // G1 — flat and hollow
+        const o2 = ac.createOscillator();
+        o2.type = "sine";
+        o2.frequency.value = 98;
+        const o2g = ac.createGain();
+        o2g.gain.value = 0.3; // quieter overtone
+        o2.connect(o2g);
+        o2g.connect(filter);
+        o1.connect(filter);
+        filter.connect(bus);
+
+        bus.gain.linearRampToValueAtTime(0.045, ac.currentTime + 3.5);
+        o1.start();
+        o2.start();
+        oscs.push(o1, o2);
+
+        // Very sparse, very faint heartbeat every 14–22s at 45% intensity
+        ambientTimers.push(
+            setInterval(() => playHeartbeat(0.45), 14000 + Math.random() * 8000)
+        );
+
+        ambientNodes = { bus, oscs };
+    } else if (variant === "road") {
+        // Open, airy, road-like — higher fundamental + slow LFO on filter
+        const filter = ac.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.value = 700;
+        filter.Q.value = 0.7;
+
+        const o1 = ac.createOscillator();
+        o1.type = "sine";
+        o1.frequency.value = 82.4; // E2
+        const o2 = ac.createOscillator();
+        o2.type = "sine";
+        o2.frequency.value = 82.4;
+        o2.detune.value = 14; // slow phasing beat
+        const o3 = ac.createOscillator();
+        o3.type = "triangle";
+        o3.frequency.value = 246.9; // B3
+        const o3g = ac.createGain();
+        o3g.gain.value = 0.18;
+        o3.connect(o3g);
+        o3g.connect(filter);
+
+        const lfo = ac.createOscillator();
+        lfo.type = "sine";
+        lfo.frequency.value = 0.09;
+        const lfoG = ac.createGain();
+        lfoG.gain.value = 260;
+        lfo.connect(lfoG);
+        lfoG.connect(filter.frequency);
+
+        o1.connect(filter);
+        o2.connect(filter);
+        filter.connect(bus);
+
+        bus.gain.linearRampToValueAtTime(0.055, ac.currentTime + 3.4);
+        o1.start();
+        o2.start();
+        o3.start();
+        lfo.start();
+        oscs.push(o1, o2, o3, lfo);
+
+        // Soft distant chime every 12–20s
+        ambientTimers.push(
+            setInterval(() => _roadChime(), 12000 + Math.random() * 8000)
+        );
+
+        ambientNodes = { bus, oscs };
+    } else if (variant === "cave") {
         // Warmer, resonant cave bed — C2 fundamental + perfect fifth shimmer
         const filter = ac.createBiquadFilter();
         filter.type = "lowpass";
