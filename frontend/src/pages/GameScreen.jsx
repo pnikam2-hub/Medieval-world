@@ -62,13 +62,14 @@ export default function GameScreen() {
         completedRef.current = false;
     }, [id]);
 
-    // Ambient drone for the duration of the game screen
+    // Ambient drone for the duration of the game screen — variant per chapter
     useEffect(() => {
-        startAmbient();
+        const variant = id === 3 ? "cave" : id === 5 ? "fear" : "default";
+        startAmbient(variant);
         return () => {
             stopAmbient();
         };
-    }, []);
+    }, [id]);
 
     // Wire all gameEvents (dialogue, hint, lantern, completion, fx)
     useChapterEvents({

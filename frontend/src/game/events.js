@@ -25,3 +25,12 @@ export const gameEvents = {
         listeners.clear();
     },
 };
+
+// Debug hatch: lets automated tests trigger gameEvents without depending on
+// Phaser keyboard focus. No effect on regular gameplay since nothing in the
+// app polls this; calling it only forwards to gameEvents.emit.
+if (typeof window !== "undefined") {
+    window.__heartboundEmit = (event, payload) =>
+        gameEvents.emit(event, payload);
+}
+

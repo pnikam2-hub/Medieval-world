@@ -1,0 +1,51 @@
+{
+  "summary": "Iteration 5 frontend-only verification of (a) per-chapter ambient variants, (b) Sharable Threshold card, (c) window.__heartboundEmit debug hatch, (d) regression of mute toggle. RESULT: 6/7 scenarios PASS. 1 CRITICAL BUG: Threshold download AND share both fail with SecurityError 'Tainted canvases may not be exported' because ThresholdCard.jsx renders the quote inside an <foreignObject> with HTML, which taints the canvas in Chromium and blocks canvas.toBlob(). User cannot actually save or share the card.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "ThresholdCard.jsx",
+        "issue": "CRITICAL: canvas.toBlob() throws SecurityError 'Tainted canvases may not be exported' on BOTH the Download and Share (fallback) buttons. Console + pageerror: 'Failed to execute \\'toBlob\\' on \\'HTMLCanvasElement\\': Tainted canvases may not be exported.' at img.onload in ThresholdCard. Root cause: the SVG embeds a <foreignObject> (lines 253-268) with inline HTML for the quote. In Chromium, drawing an SVG that contains foreignObject into a canvas marks the canvas as cross-origin-tainted, so toBlob/getImageData are blocked. The Image with crossOrigin='anonymous' does NOT help here because the taint comes from the foreignObject contents, not network CORS. Result: clicking threshold-download-button shows 'Rendering' then silently resets to idle (no PNG download). threshold-share-button does the same. No file is ever produced. The button text never reaches 'Saved' on success path.",
+        "selector": "[data-testid=threshold-download-button], [data-testid=threshold-share-button]",
+        "priority": "CRITICAL"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "verified_flows": [
+    "[/threshold] data-testid=threshold-screen, threshold-card, threshold-card-svg all visible after seeding completedChapters:[1..5] + hero name 'Mira' + accent 'ember'",
+    "SVG text contains required strings: 'CHAPTER V · FEAR', 'First threshold crossed', 'for Mira', exact quote 'The first victory is not fear disappearing. It is you no longer disappearing inside fear.', and 'ANTARA · EMBER LANTERN' footer -- all 5 PASS",
+    "Repeated visits to /threshold do not throw — SVG ref + serializer re-usable each mount (verified 2 sequential mounts)",
+    "[mute] /game/1 -> data-testid=mute-button cycles 'Sound'<->'Muted'; localStorage 'heartbound.audio.muted' updates 'true'/'false' each click; survives page reload (label 'Muted' + ls='true' after reload)",
+    "[ambient lifecycle] Navigated /game/1 -> /game/3 -> /game/5 -> /game/1 with ~1.5s dwell each. Zero JS pageerrors. AudioContext available. data-testid=game-screen-{id} mounts/unmounts cleanly; useEffect cleanup -> stopAmbient runs without throwing.",
+    "[debug hatch] window.__heartboundEmit exists on /game/1 and is a function. Calling window.__heartboundEmit('hud:hint','TEST_HINT_BANNER') triggers data-testid=hud-hint to appear with the exact payload text -> PASS. This validates the events.js debug hatch and confirms the gameEvents bridge to React UI is functional.",
+    "[regression] / title screen renders 'Heartbound · The Hero Within' with 'Begin the journey', 'Continue · Chapter 1', 'Chapter map' actions intact"
+  ],
+  "test_report_links": [
+    "/app/test_reports/iteration_5.json",
+    "/app/test_reports/iteration_4.json"
+  ],
+  "action_items": [
+    "CRITICAL FIX (ThresholdCard.jsx ~lines 253-268): Replace the <foreignObject> wrapping the quote with native SVG <text>/<tspan> elements. Split the quote across 2-3 <text> lines (or use <tspan dy>) to avoid the foreignObject taint. After this change, canvas.toBlob() will succeed and the .png download + share fallback will work. Example: <text x={W/2} y={1175} textAnchor='middle' fontFamily='Cormorant Garamond, serif' fontStyle='italic' fontSize='30' fill='#e5e5e5' opacity='0.92'><tspan x={W/2}>“The first victory is not fear disappearing.</tspan><tspan x={W/2} dy='42'>It is you no longer disappearing inside fear.”</tspan></text>",
+    "After fix, retest both threshold-download-button (filename must start 'heartbound-threshold-' and end '.png', for 'Mira'+ember -> 'heartbound-threshold-mira.png') and threshold-share-button (fallback download 'heartbound-threshold.png' in headless Chromium)."
+  ],
+  "critical_code_review_comments": [
+    "ThresholdCard.jsx: The <foreignObject> approach is the root cause of the canvas taint. SVG-to-Canvas rasterization is incompatible with foreignObject in Chromium/WebKit. This is a well-known browser security restriction, not a bug we can work around with crossOrigin flags. Use native SVG text only.",
+    "ThresholdCard.jsx: shareState reverts to 'idle' silently on error (catch block lines 79-81 / 116-118). User has no feedback that the download failed. Consider surfacing an error state ('Failed' label) so users know to retry/use the share fallback. Currently the button just flickers 'Rendering' and returns to 'Download PNG' with no indication.",
+    "sound.js: startAmbient correctly checks (ambientNodes && ambientVariant === variant) to no-op; variant transitions correctly fade out old (1.2s ramp + 1300ms setTimeout cleanup) before starting new bus. master GainNode pattern preserved. _makeWind + _caveChime + heartbeat schedule all route through master so mute applies. Looks correct.",
+    "events.js: window.__heartboundEmit is the right shape — a thin forwarder to gameEvents.emit with no side effects on gameplay (no internal subscriber checks it). Safe to ship.",
+    "GameScreen.jsx: useEffect dep=[id] correctly re-runs startAmbient on chapter change; cleanup stopAmbient runs on each id change which lets startAmbient see ambientNodes===null and start fresh -- but since stopAmbient sets ambientNodes=null synchronously while async cleanup happens at +1300ms, rapid back-to-back chapter changes within 1.3s could overlap two bus tear-downs. Not observed in test (1.5s dwell), but worth noting."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "skipped (frontend-only)",
+    "frontend": "6/7 scenarios PASS. CRITICAL: threshold download + share both broken by canvas taint from foreignObject. Mute, ambient lifecycle, debug hatch, SVG rendering, repeated mounts, title regression all PASS."
+  },
+  "test_credentials": "none required",
+  "seed_data_creation": "localStorage seeded heartbound.save.v1 with hero={name:'Mira', accent:'ember'}, completedChapters:[1,2,3,4,5], mirrorLensTooltipShown:true, unlockedQualities:['truthful-response','presence']. Cleared heartbound.audio.muted for mute tests.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Only 1 outstanding bug: ThresholdCard <foreignObject> -> canvas taint -> toBlob SecurityError. After main agent replaces foreignObject with native <text>/<tspan>, retest the download flow with page.expect_download() — expect filename 'heartbound-threshold-mira.png' (lowercase, ember accent doesn't appear in filename), and button text should briefly show 'Rendering' then 'Saved' before reverting to 'Download PNG'. The share button in headless Chromium will hit the fallback path and produce 'heartbound-threshold.png'. All other plumbing (mute, ambient, hatch, SVG content) is solid.",
+  "rca_of_the_issue": "REPRO: Visit /threshold (any hero name), click threshold-download-button. EXPECTED: PNG file downloads, button shows 'Saved'. ACTUAL: pageerror 'Failed to execute toBlob on HTMLCanvasElement: Tainted canvases may not be exported.' Button briefly shows 'Rendering' and resets to idle with no file produced. ROOT CAUSE: ThresholdCard.jsx lines 253-268 use <foreignObject> with embedded XHTML <div> for the quote. When the SVG is serialized -> Blob -> Image -> drawImage(canvas), Chromium marks the canvas as tainted because foreignObject can host arbitrary HTML (a privacy/security boundary). Subsequent canvas.toBlob() raises SecurityError. The img.crossOrigin='anonymous' attribute does not help — the taint is intrinsic to foreignObject, not network-CORS. MITIGATION: Replace the <foreignObject>/<div> with native SVG <text> + <tspan> (split into 2 lines around 'disappearing.'). After this change, the SVG contains only standard SVG primitives and the canvas remains untainted, so toBlob succeeds and download/share both work as specified."
+}
