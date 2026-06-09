@@ -1,4 +1,4 @@
-import { Eye, BookOpen, Sparkles, Volume2, VolumeX } from "lucide-react";
+import { Eye, BookOpen, Sparkles, Settings as SettingsIcon } from "lucide-react";
 import { useGameStore } from "@/game/useGameStore";
 
 export default function HUD({
@@ -8,9 +8,8 @@ export default function HUD({
     onToggleMirror,
     onOpenJournal,
     onBackToMap,
+    onOpenSettings,
     hint,
-    muted,
-    onToggleMute,
 }) {
     const state = useGameStore();
     const lanternPct = Math.round(state.lantern * 100);
@@ -53,9 +52,7 @@ export default function HUD({
                     >
                         <Eye size={14} strokeWidth={1.5} />
                         <span>Mirror</span>
-                        <kbd className="text-[10px] text-neutral-500 ml-1">
-                            M
-                        </kbd>
+                        <kbd className="text-[10px] text-neutral-500 ml-1">M</kbd>
                     </button>
                     <button
                         onClick={onOpenJournal}
@@ -64,9 +61,7 @@ export default function HUD({
                     >
                         <BookOpen size={14} strokeWidth={1.5} />
                         <span>Journal</span>
-                        <kbd className="text-[10px] text-neutral-500 ml-1">
-                            J
-                        </kbd>
+                        <kbd className="text-[10px] text-neutral-500 ml-1">J</kbd>
                     </button>
                     <button
                         onClick={onBackToMap}
@@ -77,22 +72,17 @@ export default function HUD({
                         <span>Map</span>
                     </button>
                     <button
-                        onClick={onToggleMute}
-                        data-testid="mute-button"
-                        aria-label={muted ? "Unmute audio" : "Mute audio"}
-                        className={`crystal px-3 py-2 rounded-sm flex items-center gap-2 text-xs uppercase tracking-[0.25em] transition-all duration-300 ${muted ? "text-neutral-500 hover:text-amber-200" : "text-amber-200/90 hover:text-amber-100"}`}
+                        onClick={onOpenSettings}
+                        data-testid="settings-button"
+                        aria-label="Open settings"
+                        className="crystal p-2 rounded-sm text-neutral-400 hover:text-amber-200 transition-all duration-300"
                     >
-                        {muted ? (
-                            <VolumeX size={14} strokeWidth={1.5} />
-                        ) : (
-                            <Volume2 size={14} strokeWidth={1.5} />
-                        )}
-                        <span>{muted ? "Muted" : "Sound"}</span>
+                        <SettingsIcon size={14} strokeWidth={1.5} />
                     </button>
                 </div>
             </div>
 
-            {/* Chapter label, bottom right of top bar */}
+            {/* Chapter label */}
             <div className="absolute top-20 left-4 md:left-6">
                 <p
                     className="text-[10px] uppercase tracking-[0.4em] text-neutral-500"

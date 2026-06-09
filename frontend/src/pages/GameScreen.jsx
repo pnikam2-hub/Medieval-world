@@ -5,6 +5,7 @@ import HUD from "@/components/HUD";
 import DialogueBox from "@/components/DialogueBox";
 import MobileControls from "@/components/MobileControls";
 import MirrorOverlay from "@/components/MirrorOverlay";
+import SettingsPanel from "@/components/SettingsPanel";
 import { CHAPTERS } from "@/game/chapters";
 import { gameStore, useGameStore } from "@/game/useGameStore";
 import { useDialogueSequencer } from "@/game/useDialogueSequencer";
@@ -15,7 +16,17 @@ import {
     stopAmbient,
     isMuted,
     toggleMuted,
+    getVolume,
+    setVolume as setAudioVolume,
 } from "@/game/sound";
+
+const CHAPTER_AMBIENT = {
+    1: "wasteland",
+    2: "wasteland",
+    3: "cave",
+    4: "road",
+    5: "fear",
+};
 
 export default function GameScreen() {
     const { chapterId } = useParams();
@@ -27,7 +38,9 @@ export default function GameScreen() {
     const [mirrorActive, setMirrorActive] = useState(false);
     const [showTooltip, setShowTooltip] = useState(false);
     const [hint, setHint] = useState(null);
+    const [settingsOpen, setSettingsOpen] = useState(false);
     const [muted, setMutedState] = useState(isMuted());
+    const [volume, setVolumeState] = useState(getVolume());
 
     const mirrorRef = useRef(mirrorActive);
     const completedRef = useRef(false);
@@ -37,7 +50,6 @@ export default function GameScreen() {
     dialogueRef.current = dialogue;
     mirrorRef.current = mirrorActive;
 
-    // Single source of truth for Mirror Lens toggle (M-key + HUD + mobile).
     const toggleMirror = useCallback(() => {
         const next = !mirrorActive;
         const tooltipShown = gameStore.get().mirrorLensTooltipShown;
@@ -56,22 +68,30 @@ export default function GameScreen() {
         setMutedState(next);
     }, []);
 
+    const handleChangeVolume = useCallback((v) => {
+        setAudioVolume(v);
+        setVolumeState(v);
+    }, []);
+
+    const handleChangeJournalTextSize = useCallback((size) => {
+        gameStore.set({ journalTextSize: size });
+    }, []);
+
     // Persist current chapter and reset per-chapter completion guard
     useEffect(() => {
         gameStore.set({ currentChapter: id });
         completedRef.current = false;
     }, [id]);
 
-    // Ambient drone for the duration of the game screen — variant per chapter
+    // Ambient drone variant per chapter
     useEffect(() => {
-        const variant = id === 3 ? "cave" : id === 5 ? "fear" : "default";
+        const variant = CHAPTER_AMBIENT[id] || "default";
         startAmbient(variant);
         return () => {
             stopAmbient();
         };
     }, [id]);
 
-    // Wire all gameEvents (dialogue, hint, lantern, completion, fx)
     useChapterEvents({
         setHint,
         dialogueRef,
@@ -127,9 +147,19 @@ export default function GameScreen() {
                 onToggleMirror={toggleMirror}
                 onOpenJournal={() => navigate(`/journal/${id}`)}
                 onBackToMap={() => navigate("/map")}
+                onOpenSettings={() => setSettingsOpen((v) => !v)}
                 hint={hint}
+            />
+
+            <SettingsPanel
+                open={settingsOpen}
+                onClose={() => setSettingsOpen(false)}
                 muted={muted}
                 onToggleMute={handleToggleMute}
+                volume={volume}
+                onChangeVolume={handleChangeVolume}
+                journalTextSize={state.journalTextSize}
+                onChangeJournalTextSize={handleChangeJournalTextSize}
             />
 
             <MirrorOverlay

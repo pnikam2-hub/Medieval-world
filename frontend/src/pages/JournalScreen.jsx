@@ -3,9 +3,22 @@ import { useNavigate, useParams } from "react-router-dom";
 import { CHAPTERS } from "@/game/chapters";
 import { gameStore, useGameStore } from "@/game/useGameStore";
 
-function JournalContent({ id, initialNote, chapter }) {
+function JournalContent({ id, initialNote, chapter, textSize }) {
     const navigate = useNavigate();
     const [note, setNote] = useState(initialNote);
+
+    const promptClass =
+        textSize === "sm"
+            ? "text-xl md:text-2xl"
+            : textSize === "lg"
+              ? "text-3xl md:text-4xl"
+              : "text-2xl md:text-3xl";
+    const inputClass =
+        textSize === "sm"
+            ? "text-base"
+            : textSize === "lg"
+              ? "text-2xl"
+              : "text-lg";
 
     const save = () => {
         gameStore.saveJournalNote(id, note.trim());
@@ -46,7 +59,7 @@ function JournalContent({ id, initialNote, chapter }) {
                             Reflection prompt
                         </p>
                         <p
-                            className="font-mythic italic text-2xl md:text-3xl text-amber-100/90 mt-3 leading-snug"
+                            className={`font-mythic italic ${promptClass} text-amber-100/90 mt-3 leading-snug`}
                             data-testid="journal-prompt"
                         >
                             &ldquo;{chapter.journalQuestion}&rdquo;
@@ -59,7 +72,7 @@ function JournalContent({ id, initialNote, chapter }) {
                     <div className="flex flex-col">
                         <textarea
                             data-testid="journal-input"
-                            className="crystal flex-1 min-h-[200px] md:min-h-[260px] bg-transparent border border-white/10 rounded-sm px-4 py-3 font-mythic text-lg text-amber-50/90 placeholder:text-neutral-600 focus:border-amber-400/60 leading-relaxed"
+                            className={`crystal flex-1 min-h-[200px] md:min-h-[260px] bg-transparent border border-white/10 rounded-sm px-4 py-3 font-mythic ${inputClass} text-amber-50/90 placeholder:text-neutral-600 focus:border-amber-400/60 leading-relaxed`}
                             value={note}
                             onChange={(e) =>
                                 setNote(e.target.value.slice(0, 1500))
@@ -101,6 +114,7 @@ export default function JournalScreen() {
             id={id}
             initialNote={initialNote}
             chapter={chapter}
+            textSize={state.journalTextSize || "md"}
         />
     );
 }

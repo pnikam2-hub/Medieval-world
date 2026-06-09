@@ -1,9 +1,35 @@
+import { lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
-import ThresholdCard from "@/components/ThresholdCard";
 import { useGameStore } from "@/game/useGameStore";
+
+// Lazy-load the SVG/Canvas-heavy card so the title-screen bundle stays light.
+const ThresholdCard = lazy(() =>
+    import("@/components/ThresholdCard")
+);
 
 const THRESHOLD_QUOTE =
     "The first victory is not fear disappearing. It is you no longer disappearing inside fear.";
+
+function CardFallback() {
+    return (
+        <div
+            data-testid="threshold-card-fallback"
+            className="flex flex-col items-center gap-6"
+        >
+            <div
+                className="rounded-sm border border-amber-400/20 crystal-warm flex items-center justify-center"
+                style={{
+                    width: "min(420px, 80vw)",
+                    aspectRatio: "1080/1350",
+                }}
+            >
+                <p className="text-[10px] uppercase tracking-[0.4em] text-amber-200/60 font-mythic animate-ember">
+                    rendering threshold
+                </p>
+            </div>
+        </div>
+    );
+}
 
 export default function ThresholdScreen() {
     const navigate = useNavigate();
@@ -45,11 +71,13 @@ export default function ThresholdScreen() {
                     className="mt-10 animate-reveal"
                     style={{ animationDelay: "900ms" }}
                 >
-                    <ThresholdCard
-                        heroName={heroName}
-                        accent={accent}
-                        quote={THRESHOLD_QUOTE}
-                    />
+                    <Suspense fallback={<CardFallback />}>
+                        <ThresholdCard
+                            heroName={heroName}
+                            accent={accent}
+                            quote={THRESHOLD_QUOTE}
+                        />
+                    </Suspense>
                 </div>
 
                 <div

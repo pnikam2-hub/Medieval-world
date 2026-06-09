@@ -7,13 +7,20 @@ let ambientNodes = null;
 let ambientVariant = null;
 let ambientTimers = [];
 let muted = false;
-const STORAGE_KEY = "heartbound.audio.muted";
+let volume = 1.0;
+const MUTE_KEY = "heartbound.audio.muted";
+const VOL_KEY = "heartbound.audio.volume";
 
-// Read initial mute state from localStorage so user preference survives reload.
+// Read initial mute + volume state from localStorage so user preference survives reload.
 try {
     if (typeof window !== "undefined") {
-        const v = window.localStorage.getItem(STORAGE_KEY);
-        if (v === "true") muted = true;
+        const m = window.localStorage.getItem(MUTE_KEY);
+        if (m === "true") muted = true;
+        const v = window.localStorage.getItem(VOL_KEY);
+        const parsed = v == null ? null : parseFloat(v);
+        if (parsed != null && !Number.isNaN(parsed)) {
+            volume = Math.max(0, Math.min(1, parsed));
+        }
     }
 } catch (e) {
     // ignore
@@ -26,13 +33,20 @@ function ensure() {
         if (!AC) return null;
         ctx = new AC();
         master = ctx.createGain();
-        master.gain.value = muted ? 0 : 1;
+        master.gain.value = muted ? 0 : volume;
         master.connect(ctx.destination);
     }
     if (ctx.state === "suspended") {
         ctx.resume().catch(() => {});
     }
     return ctx;
+}
+
+function applyMasterGain() {
+    if (!master || !ctx) return;
+    const now = ctx.currentTime;
+    master.gain.cancelScheduledValues(now);
+    master.gain.setTargetAtTime(muted ? 0 : volume, now, 0.08);
 }
 
 export function isMuted() {
@@ -42,20 +56,31 @@ export function isMuted() {
 export function setMuted(next) {
     muted = !!next;
     try {
-        window.localStorage.setItem(STORAGE_KEY, muted ? "true" : "false");
+        window.localStorage.setItem(MUTE_KEY, muted ? "true" : "false");
     } catch (e) {
         // ignore
     }
-    if (master && ctx) {
-        const now = ctx.currentTime;
-        master.gain.cancelScheduledValues(now);
-        master.gain.setTargetAtTime(muted ? 0 : 1, now, 0.08);
-    }
+    applyMasterGain();
 }
 
 export function toggleMuted() {
     setMuted(!muted);
     return muted;
+}
+
+export function getVolume() {
+    return volume;
+}
+
+export function setVolume(next) {
+    const v = Math.max(0, Math.min(1, Number(next) || 0));
+    volume = v;
+    try {
+        window.localStorage.setItem(VOL_KEY, String(v));
+    } catch (e) {
+        // ignore
+    }
+    applyMasterGain();
 }
 
 // ---------------------------------------------------------------------------
@@ -100,7 +125,6 @@ function _caveChime() {
     const ac = ensure();
     if (!ac) return;
     const now = ac.currentTime;
-    // Choose a random tone in a pentatonic-ish set for a cave bell feel
     const pool = [659.25, 783.99, 1046.5, 1318.5]; // E5, G5, C6, E6
     const freq = pool[Math.floor(Math.random() * pool.length)];
     const osc = ac.createOscillator();
@@ -114,6 +138,28 @@ function _caveChime() {
     osc.connect(g).connect(master);
     osc.start(now);
     osc.stop(now + 2.9);
+}
+
+function _roadChime() {
+    const ac = ensure();
+    if (!ac) return;
+    const now = ac.currentTime;
+    // Two soft tones — a distant traveling-bell feel (A4 + E5)
+    const tones = [440, 659.25];
+    tones.forEach((freq, i) => {
+        const osc = ac.createOscillator();
+        osc.type = "triangle";
+        osc.frequency.value = freq;
+        const g = ac.createGain();
+        const startAt = now + i * 0.18;
+        g.gain.value = 0;
+        g.gain.setValueAtTime(0, startAt);
+        g.gain.linearRampToValueAtTime(0.035, startAt + 0.06);
+        g.gain.exponentialRampToValueAtTime(0.0005, startAt + 2.2);
+        osc.connect(g).connect(master);
+        osc.start(startAt);
+        osc.stop(startAt + 2.3);
+    });
 }
 
 function _stopAmbientInternal() {
@@ -270,10 +316,11 @@ export function stopAmbient() {
 // ---------------------------------------------------------------------------
 // Heartbeat — two soft thumps used for key moments
 // ---------------------------------------------------------------------------
-export function playHeartbeat() {
+export function playHeartbeat(intensity = 1) {
     const ac = ensure();
     if (!ac) return;
     const now = ac.currentTime;
+    const scale = Math.max(0.1, Math.min(1, intensity));
     [0, 0.22].forEach((delay, i) => {
         const osc = ac.createOscillator();
         osc.type = "sine";
@@ -282,7 +329,10 @@ export function playHeartbeat() {
         const g = ac.createGain();
         g.gain.value = 0;
         g.gain.setValueAtTime(0, now + delay);
-        g.gain.linearRampToValueAtTime(i === 0 ? 0.3 : 0.2, now + delay + 0.015);
+        g.gain.linearRampToValueAtTime(
+            (i === 0 ? 0.3 : 0.2) * scale,
+            now + delay + 0.015
+        );
         g.gain.exponentialRampToValueAtTime(0.0005, now + delay + 0.32);
         osc.connect(g).connect(master);
         osc.start(now + delay);
