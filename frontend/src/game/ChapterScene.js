@@ -235,13 +235,16 @@ export default class ChapterScene extends Phaser.Scene {
     _setupChapter1() {
         this.citizens = [];
         const citizenData = [
-            { id: "citizen-a", x: 0.32 },
-            { id: "citizen-b", x: 0.55 },
-            { id: "citizen-c", x: 0.78 },
+            { id: "citizen-a", x: 0.32, surfaceLabel: "I am fine", hiddenLabel: "Exhaustion" },
+            { id: "citizen-b", x: 0.55, surfaceLabel: "Nothing changes", hiddenLabel: "Loneliness" },
+            { id: "citizen-c", x: 0.78, surfaceLabel: "Keep walking", hiddenLabel: "Unspoken grief" },
         ];
         citizenData.forEach((c) => {
             const px = W * c.x;
-            const cont = this._makeNpc(px, H - 110, "Citizen");
+            const cont = this._makeNpc(px, H - 110, "Citizen", {
+                surfaceLabel: c.surfaceLabel,
+                hiddenLabel: c.hiddenLabel,
+            });
             cont.npcId = c.id;
             cont.kind = "citizen";
             cont.spoken = false;
@@ -327,6 +330,27 @@ export default class ChapterScene extends Phaser.Scene {
         m.strokeCircle(0, -30, 14);
         m.lineBetween(0, -30, 0, -8);
         mural.add(m);
+        // Mirror labels for the mural
+        const muralSurface = this.add.text(0, -88, "Ancient mural", {
+            fontFamily: "Outfit, sans-serif",
+            fontSize: "11px",
+            color: "#9a9a9a",
+            fontStyle: "italic",
+        });
+        muralSurface.setOrigin(0.5, 1).setAlpha(0.85);
+        const muralHidden = this.add.text(0, -88, "A door, a memory", {
+            fontFamily: "Cormorant Garamond, serif",
+            fontSize: "16px",
+            color: "#fadb5f",
+            fontStyle: "italic",
+        });
+        muralHidden.setOrigin(0.5, 1).setAlpha(0).setBlendMode(Phaser.BlendModes.ADD);
+        const muralHalo = this.add.circle(0, -70, 34, 0xfadb5f, 0);
+        muralHalo.setBlendMode(Phaser.BlendModes.ADD);
+        mural.add([muralHalo, muralSurface, muralHidden]);
+        mural.surfaceLabel = muralSurface;
+        mural.hiddenLabel = muralHidden;
+        mural.mirrorHalo = muralHalo;
         mural.kind = "mural";
         mural.active = false;
         this.worldLayer.add(mural);
@@ -364,6 +388,27 @@ export default class ChapterScene extends Phaser.Scene {
             repeat: -1,
         });
         tara.add([robe, halo, lantern]);
+        // Mirror labels for Tara
+        const taraSurface = this.add.text(0, -80, "Stranger", {
+            fontFamily: "Outfit, sans-serif",
+            fontSize: "11px",
+            color: "#9a9a9a",
+            fontStyle: "italic",
+        });
+        taraSurface.setOrigin(0.5, 1).setAlpha(0.85);
+        const taraHidden = this.add.text(0, -80, "Myth keeper", {
+            fontFamily: "Cormorant Garamond, serif",
+            fontSize: "16px",
+            color: "#fadb5f",
+            fontStyle: "italic",
+        });
+        taraHidden.setOrigin(0.5, 1).setAlpha(0).setBlendMode(Phaser.BlendModes.ADD);
+        const taraMirrorHalo = this.add.circle(0, -60, 36, 0xfadb5f, 0);
+        taraMirrorHalo.setBlendMode(Phaser.BlendModes.ADD);
+        tara.add([taraMirrorHalo, taraSurface, taraHidden]);
+        tara.surfaceLabel = taraSurface;
+        tara.hiddenLabel = taraHidden;
+        tara.mirrorHalo = taraMirrorHalo;
         tara.kind = "tara";
         this.worldLayer.add(tara);
         this.tara = tara;
@@ -439,6 +484,27 @@ export default class ChapterScene extends Phaser.Scene {
             repeat: -1,
         });
         twin.add([aura, tBody]);
+        // Mirror labels for Shadow Twin
+        const twinSurface = this.add.text(0, -80, "Fear", {
+            fontFamily: "Outfit, sans-serif",
+            fontSize: "11px",
+            color: "#9a9a9a",
+            fontStyle: "italic",
+        });
+        twinSurface.setOrigin(0.5, 1).setAlpha(0.85);
+        const twinHidden = this.add.text(0, -80, "Wounded, protective self", {
+            fontFamily: "Cormorant Garamond, serif",
+            fontSize: "16px",
+            color: "#fadb5f",
+            fontStyle: "italic",
+        });
+        twinHidden.setOrigin(0.5, 1).setAlpha(0).setBlendMode(Phaser.BlendModes.ADD);
+        const twinMirrorHalo = this.add.circle(0, -60, 36, 0xfadb5f, 0);
+        twinMirrorHalo.setBlendMode(Phaser.BlendModes.ADD);
+        twin.add([twinMirrorHalo, twinSurface, twinHidden]);
+        twin.surfaceLabel = twinSurface;
+        twin.hiddenLabel = twinHidden;
+        twin.mirrorHalo = twinMirrorHalo;
         twin.kind = "twin";
         this.worldLayer.add(twin);
         this.shadowTwin = twin;
@@ -505,7 +571,7 @@ export default class ChapterScene extends Phaser.Scene {
     // ------------------------------------------------------------------
     // Helpers
     // ------------------------------------------------------------------
-    _makeNpc(x, y, label) {
+    _makeNpc(x, y, label, labels = {}) {
         const cont = this.add.container(x, y);
         const body = this.add.graphics();
         body.fillStyle(0x222222, 1);
@@ -516,6 +582,38 @@ export default class ChapterScene extends Phaser.Scene {
         const dimLantern = this.add.circle(0, -22, 2.5, 0x8a7a3a, 0.6);
         cont.add([body, dimLantern]);
         cont.label = label;
+
+        // Surface label (visible by default — dim grey, slightly italic feel)
+        const surface = this.add.text(0, -68, labels.surfaceLabel || "", {
+            fontFamily: "Outfit, sans-serif",
+            fontSize: "11px",
+            color: "#9a9a9a",
+            fontStyle: "italic",
+            align: "center",
+        });
+        surface.setOrigin(0.5, 1);
+        surface.setAlpha(0.85);
+
+        // Hidden label (visible only when Mirror Lens is active — golden, brighter)
+        const hidden = this.add.text(0, -68, labels.hiddenLabel || "", {
+            fontFamily: "Cormorant Garamond, serif",
+            fontSize: "16px",
+            color: "#fadb5f",
+            fontStyle: "italic",
+            align: "center",
+        });
+        hidden.setOrigin(0.5, 1);
+        hidden.setAlpha(0);
+        hidden.setBlendMode(Phaser.BlendModes.ADD);
+
+        // Mirror halo behind hidden label
+        const halo = this.add.circle(0, -50, 30, 0xfadb5f, 0);
+        halo.setBlendMode(Phaser.BlendModes.ADD);
+
+        cont.add([halo, surface, hidden]);
+        cont.surfaceLabel = surface;
+        cont.hiddenLabel = hidden;
+        cont.mirrorHalo = halo;
         return cont;
     }
 
@@ -532,15 +630,48 @@ export default class ChapterScene extends Phaser.Scene {
 
     _refreshMirror() {
         const active = this.mirrorActive;
-        // Highlight NPCs and citizens when mirror is on
-        if (this.citizens) {
-            this.citizens.forEach((c) => {
-                c.list[1] && (c.list[1].alpha = active ? 1 : 0.6);
-            });
-        }
-        // Lantern aura intensifies
+
+        // Lantern aura intensifies when mirror is on
         if (this.heroLanternHalo)
             this.heroLanternHalo.setAlpha(active ? 0.45 : 0.2);
+
+        // Reveal hidden labels on every NPC with mirror data
+        const npcs = [
+            ...(this.citizens || []),
+            this.tara,
+            this.mural,
+            this.shadowTwin,
+        ].filter(Boolean);
+
+        npcs.forEach((npc) => {
+            if (!npc.surfaceLabel || !npc.hiddenLabel) return;
+            // Cancel any prior tweens on the labels
+            this.tweens.killTweensOf([
+                npc.surfaceLabel,
+                npc.hiddenLabel,
+                npc.mirrorHalo,
+            ]);
+            this.tweens.add({
+                targets: npc.surfaceLabel,
+                alpha: active ? 0 : 0.85,
+                duration: 350,
+                ease: "sine.out",
+            });
+            this.tweens.add({
+                targets: npc.hiddenLabel,
+                alpha: active ? 1 : 0,
+                y: active ? -78 : -68,
+                duration: 500,
+                ease: "sine.out",
+            });
+            this.tweens.add({
+                targets: npc.mirrorHalo,
+                alpha: active ? 0.35 : 0,
+                scale: active ? 1.2 : 0.6,
+                duration: 500,
+                ease: "sine.out",
+            });
+        });
     }
 
     _tryInteract() {

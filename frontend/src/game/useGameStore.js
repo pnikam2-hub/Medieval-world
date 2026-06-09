@@ -10,6 +10,7 @@ const defaultState = {
     journal: {}, // { chapterId: noteText }
     unlockedQualities: [], // ['truthful-response', 'presence']
     mirrorLensUnlocked: true, // preview from chapter 1 onward
+    mirrorLensTooltipShown: false, // one-time first-use tooltip
     hasSave: false,
 };
 

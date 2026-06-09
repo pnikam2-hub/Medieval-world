@@ -92,6 +92,8 @@ export const CITIZENS = [
     {
         id: "citizen-a",
         label: "Citizen",
+        surfaceLabel: "I am fine",
+        hiddenLabel: "Exhaustion",
         surface: "I am fine. Everyone is fine.",
         hidden: "Tired. Tired for a very long time.",
         x: 0.22,
@@ -101,6 +103,8 @@ export const CITIZENS = [
     {
         id: "citizen-b",
         label: "Citizen",
+        surfaceLabel: "Nothing changes",
+        hiddenLabel: "Loneliness",
         surface: "Nothing has changed. Nothing changes here.",
         hidden: "I cannot remember when I last laughed.",
         x: 0.5,
@@ -109,6 +113,8 @@ export const CITIZENS = [
     {
         id: "citizen-c",
         label: "Citizen",
+        surfaceLabel: "Keep walking",
+        hiddenLabel: "Unspoken grief",
         surface: "Why are you stopping? Keep walking. Everyone keeps walking.",
         hidden: "If I stop, I will feel it all at once.",
         x: 0.78,

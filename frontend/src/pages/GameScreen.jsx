@@ -4,6 +4,7 @@ import PhaserGame from "@/game/PhaserGame";
 import HUD from "@/components/HUD";
 import DialogueBox from "@/components/DialogueBox";
 import MobileControls from "@/components/MobileControls";
+import MirrorOverlay from "@/components/MirrorOverlay";
 import {
     CHAPTERS,
     CITIZENS,
@@ -157,6 +158,7 @@ export default function GameScreen() {
     const chapter = useMemo(() => CHAPTERS.find((c) => c.id === id), [id]);
 
     const [mirrorActive, setMirrorActive] = useState(false);
+    const [showTooltip, setShowTooltip] = useState(false);
     const [hint, setHint] = useState(null);
     const hintTimerRef = useRef(null);
     const mirrorRef = useRef(mirrorActive);
@@ -166,6 +168,22 @@ export default function GameScreen() {
     const dialogueRef = useRef(dialogue);
     dialogueRef.current = dialogue;
     mirrorRef.current = mirrorActive;
+
+    // Show first-use Mirror Lens tooltip the first time it is activated
+    const handleToggleMirror = () => {
+        setMirrorActive((v) => {
+            const next = !v;
+            if (next && !gameStore.get().mirrorLensTooltipShown) {
+                setShowTooltip(true);
+            }
+            return next;
+        });
+    };
+
+    const dismissTooltip = () => {
+        gameStore.set({ mirrorLensTooltipShown: true });
+        setShowTooltip(false);
+    };
 
     // Mount: set current chapter, reset completed flag
     useEffect(() => {
@@ -256,7 +274,13 @@ export default function GameScreen() {
     useEffect(() => {
         const handler = (e) => {
             if (e.code === "KeyM") {
-                setMirrorActive((v) => !v);
+                setMirrorActive((v) => {
+                    const next = !v;
+                    if (next && !gameStore.get().mirrorLensTooltipShown) {
+                        setShowTooltip(true);
+                    }
+                    return next;
+                });
             }
             if (e.code === "KeyJ") {
                 navigate(`/journal/${id}`);
@@ -300,10 +324,16 @@ export default function GameScreen() {
                 chapterTitle={chapter.title}
                 chapterId={id}
                 mirrorActive={mirrorActive}
-                onToggleMirror={() => setMirrorActive((v) => !v)}
+                onToggleMirror={handleToggleMirror}
                 onOpenJournal={() => navigate(`/journal/${id}`)}
                 onBackToMap={() => navigate("/map")}
                 hint={hint}
+            />
+
+            <MirrorOverlay
+                active={mirrorActive}
+                showTooltip={showTooltip}
+                onDismissTooltip={dismissTooltip}
             />
 
             <DialogueBox
@@ -323,7 +353,7 @@ export default function GameScreen() {
                     const evt = new KeyboardEvent("keydown", { code: "Space" });
                     window.dispatchEvent(evt);
                 }}
-                onMirror={() => setMirrorActive((v) => !v)}
+                onMirror={handleToggleMirror}
                 onJournal={() => navigate(`/journal/${id}`)}
             />
         </div>
