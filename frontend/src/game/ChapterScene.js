@@ -26,6 +26,7 @@ export default class ChapterScene extends Phaser.Scene {
         this.dialogueOpen = false;
         this.mirrorActive = false;
         this.lastProgressBucket = -1;
+        this.nearPromptTarget = null;
     }
 
     create() {
@@ -39,6 +40,7 @@ export default class ChapterScene extends Phaser.Scene {
 
         this._buildBackdrop();
         this._buildHero();
+        this._buildInteractPrompt();
         this._setupInput();
 
         // Per-chapter setup
@@ -215,6 +217,27 @@ export default class ChapterScene extends Phaser.Scene {
         this.worldLayer.add(this.hero);
 
         this.hero.heading = "right";
+    }
+
+    _buildInteractPrompt() {
+        this.interactPrompt = this.add.container(0, 0);
+        const bg = this.add.graphics();
+        bg.fillStyle(0x080808, 0.78);
+        bg.fillRoundedRect(-70, -16, 140, 32, 5);
+        bg.lineStyle(1, 0xfadb5f, 0.55);
+        bg.strokeRoundedRect(-70, -16, 140, 32, 5);
+        const text = this.add.text(0, 0, "Space / Interact", {
+            fontFamily: "Outfit, sans-serif",
+            fontSize: "11px",
+            color: "#fadb5f",
+            align: "center",
+        });
+        text.setOrigin(0.5);
+        this.interactPrompt.add([bg, text]);
+        this.interactPrompt.setAlpha(0);
+        this.interactPrompt.setDepth(20);
+        this.foreLayer.add(this.interactPrompt);
+        this.interactPromptLabel = text;
     }
 
     _setupInput() {
@@ -739,6 +762,107 @@ export default class ChapterScene extends Phaser.Scene {
         });
     }
 
+    _findNearestInteractable() {
+        const candidates = [];
+        if (this.chapterId === 1) {
+            (this.citizens || [])
+                .filter((c) => !c.spoken)
+                .forEach((c) =>
+                    candidates.push({
+                        target: c,
+                        range: 60,
+                        label: "Listen",
+                    })
+                );
+            (this.pulses || [])
+                .filter((p) => !p.collected)
+                .forEach((p) =>
+                    candidates.push({
+                        target: p,
+                        range: 50,
+                        label: "Collect heartbeat",
+                    })
+                );
+        } else if (this.chapterId === 2) {
+            (this.trailPulses || [])
+                .filter((p) => p.active && !p.collected)
+                .forEach((p) =>
+                    candidates.push({
+                        target: p,
+                        range: 60,
+                        label: "Collect echo",
+                    })
+                );
+            if (this.mural && !this.mural.spoken) {
+                candidates.push({
+                    target: this.mural,
+                    range: 70,
+                    label: "Listen to mural",
+                });
+            }
+        }
+
+        let nearest = null;
+        for (const c of candidates) {
+            const dist = Math.abs(c.target.x - this.hero.x);
+            if (dist <= c.range && (!nearest || dist < nearest.dist)) {
+                nearest = { ...c, dist };
+            }
+        }
+        return nearest;
+    }
+
+    _setTargetFocus(target, active) {
+        if (!target) return;
+        const alpha = active ? 0.5 : this.mirrorActive ? 0.35 : 0;
+        const scale = active ? 1.45 : this.mirrorActive ? 1.2 : 0.6;
+        if (target.mirrorHalo) {
+            target.mirrorHalo.setAlpha(alpha);
+            target.mirrorHalo.setScale(scale);
+        }
+    }
+
+    _updateInteractPrompt() {
+        if (!this.interactPrompt || this.dialogueOpen || this.completed) {
+            if (this.interactPrompt) this.interactPrompt.setAlpha(0);
+            return;
+        }
+
+        const nearest = this._findNearestInteractable();
+        if (this.nearPromptTarget && this.nearPromptTarget !== nearest?.target) {
+            this._setTargetFocus(this.nearPromptTarget, false);
+        }
+        this.nearPromptTarget = nearest?.target || null;
+
+        if (!nearest) {
+            this.interactPrompt.setAlpha(0);
+            return;
+        }
+
+        this._setTargetFocus(nearest.target, true);
+        this.interactPromptLabel.setText(`Space / ${nearest.label}`);
+        this.interactPrompt.x = nearest.target.x;
+        this.interactPrompt.y = nearest.target.y - 86;
+        this.interactPrompt.setAlpha(1);
+    }
+
+    _showNoTargetHint() {
+        if (this.chapterId === 1) {
+            gameEvents.emit(
+                "hud:hint",
+                "Move close to a citizen or glowing heartbeat, then press Space."
+            );
+        } else if (this.chapterId === 2) {
+            const collected = this.trailPulses?.filter((p) => p.collected).length || 0;
+            gameEvents.emit(
+                "hud:hint",
+                collected < 3
+                    ? "Stand beside the brightest heartbeat pulse, then press Space."
+                    : "Stand beside the mural at the far right, then press Space."
+            );
+        }
+    }
+
     _tryInteract() {
         if (this.dialogueOpen) return;
         if (this.chapterId === 1) {
@@ -761,6 +885,7 @@ export default class ChapterScene extends Phaser.Scene {
                     return;
                 }
             }
+            this._showNoTargetHint();
         } else if (this.chapterId === 2) {
             const active = this.trailPulses.find((p) => p.active && !p.collected);
             if (active && Math.abs(active.x - this.hero.x) < 60) {
@@ -778,6 +903,7 @@ export default class ChapterScene extends Phaser.Scene {
                 this._afterDialogue = () => this._completeChapter();
                 return;
             }
+            this._showNoTargetHint();
         }
     }
 
@@ -1053,6 +1179,7 @@ export default class ChapterScene extends Phaser.Scene {
 
         // Fog ribbons
         this._drawFog(dt);
+        this._updateInteractPrompt();
 
         // Kavi follow
         if (this.kavi) {
