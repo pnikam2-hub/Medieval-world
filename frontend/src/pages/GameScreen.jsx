@@ -43,6 +43,7 @@ export default function GameScreen() {
     const [muted, setMutedState] = useState(isMuted());
     const [volume, setVolumeState] = useState(getVolume());
     const [completedChapterId, setCompletedChapterId] = useState(null);
+    const [progress, setProgress] = useState(null);
 
     const mirrorRef = useRef(mirrorActive);
     const completedRef = useRef(false);
@@ -57,6 +58,11 @@ export default function GameScreen() {
         const tooltipShown = gameStore.get().mirrorLensTooltipShown;
         setMirrorActive(next);
         playMirrorChime(next ? "on" : "off");
+        setHint(
+            next
+                ? "Mirror Lens on — hidden truths now glow in gold."
+                : "Mirror Lens off — the surface returns."
+        );
         if (next && !tooltipShown) setShowTooltip(true);
     }, [mirrorActive]);
 
@@ -84,6 +90,7 @@ export default function GameScreen() {
         gameStore.set({ currentChapter: id });
         completedRef.current = false;
         setCompletedChapterId(null);
+        setProgress(null);
     }, [id]);
 
     // Ambient drone variant per chapter
@@ -97,6 +104,7 @@ export default function GameScreen() {
 
     useChapterEvents({
         setHint,
+        setProgress,
         dialogueRef,
         mirrorRef,
         completedRef,
@@ -170,6 +178,7 @@ export default function GameScreen() {
                 onBackToMap={() => navigate("/map")}
                 onOpenSettings={() => setSettingsOpen((v) => !v)}
                 hint={hint}
+                progress={progress}
             />
 
             <SettingsPanel

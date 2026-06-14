@@ -25,6 +25,7 @@ export default class ChapterScene extends Phaser.Scene {
         this.completed = false;
         this.dialogueOpen = false;
         this.mirrorActive = false;
+        this.lastProgressBucket = -1;
     }
 
     create() {
@@ -289,6 +290,8 @@ export default class ChapterScene extends Phaser.Scene {
         this._showNarration(
             "In the City of Dust, no one was sad, no one was joyful, and no one asked why the sky had forgotten blue."
         );
+        this._emitChapter1Progress();
+        gameEvents.emit("hud:hint", "Use arrows or WASD to move. Press Space near people or glowing pulses.");
     }
 
     // ------------------------------------------------------------------
@@ -373,6 +376,8 @@ export default class ChapterScene extends Phaser.Scene {
         this._showNarration(
             "Beneath the city, a heartbeat. You step toward it like a memory finding its name."
         );
+        this._emitChapter2Progress();
+        gameEvents.emit("hud:hint", "Follow each heartbeat pulse in order.");
     }
 
     // ------------------------------------------------------------------
@@ -431,6 +436,11 @@ export default class ChapterScene extends Phaser.Scene {
         this._showNarration(
             "An elder waits in the cave, lit by a hundred small lanterns of memory."
         );
+        gameEvents.emit("chapter:progress", {
+            objective: "Speak honestly with Tara.",
+            detail: "When choices appear, pick the answer that admits what the hero truly feels.",
+            phase: "Cave of Echoes",
+        });
 
         this.time.delayedCall(2400, () => {
             // walk hero to position
@@ -473,6 +483,11 @@ export default class ChapterScene extends Phaser.Scene {
 
         this._showNarration(
             "A small golden firefly slips from your chest-lantern. It looks at you as if it has known you forever."
+        );
+        this._emitTraversalProgress(
+            "Follow Kavi beyond the city.",
+            "Hold right through the fog until you reach the threshold gate.",
+            "Open road"
         );
     }
 
@@ -551,6 +566,11 @@ export default class ChapterScene extends Phaser.Scene {
         this._showNarration(
             "At the first dark threshold, something that wears your face is waiting."
         );
+        gameEvents.emit("chapter:progress", {
+            objective: "Face the Shadow Twin.",
+            detail: "Advance the dialogue, then cross the fear field without rushing.",
+            phase: "Before the threshold",
+        });
     }
 
     startFearTrial() {
@@ -558,6 +578,8 @@ export default class ChapterScene extends Phaser.Scene {
         gameEvents.emit("hud:trial", {
             label: "Move only with the steady pulse.",
         });
+        gameEvents.emit("hud:hint", "Cross during steady light. Pause when fear stirs.");
+        this._emitFearProgress();
     }
 
     _spawnKavi() {
@@ -800,11 +822,13 @@ export default class ChapterScene extends Phaser.Scene {
             });
             gameEvents.emit("hud:hint", "Approach the mural and listen.");
         }
+        this._emitChapter2Progress();
     }
 
     _checkChapter1Progress() {
         const allSpoken = this.citizens.every((c) => c.spoken);
         const allPulses = this.pulses.every((p) => p.collected);
+        this._emitChapter1Progress();
         if (allSpoken && allPulses && !this.completed) {
             this._completeChapter();
         } else if (allSpoken && !allPulses) {
@@ -823,7 +847,80 @@ export default class ChapterScene extends Phaser.Scene {
     _completeChapter() {
         if (this.completed) return;
         this.completed = true;
+        if (this.chapterId === 2) this._emitChapter2Progress();
         gameEvents.emit("chapter:complete", { chapterId: this.chapterId });
+    }
+
+    _emitChapter1Progress() {
+        if (!this.citizens || !this.pulses) return;
+        const spoken = this.citizens.filter((c) => c.spoken).length;
+        const pulses = this.pulses.filter((p) => p.collected).length;
+        gameEvents.emit("chapter:progress", {
+            objective: "Listen to the city beneath its surface.",
+            detail: "Speak with 3 citizens and collect 3 faint heartbeats. Toggle Mirror to reveal what each heart hides.",
+            label: "heard",
+            current: spoken + pulses,
+            total: 6,
+        });
+    }
+
+    _emitChapter2Progress() {
+        if (!this.trailPulses) return;
+        const collected = this.trailPulses.filter((p) => p.collected).length;
+        const muralHeard = this.mural?.spoken ? 1 : 0;
+        gameEvents.emit("chapter:progress", {
+            objective:
+                collected < 3 ? "Follow the heartbeat beneath the stone." : "Approach the mural and listen.",
+            detail:
+                collected < 3
+                    ? "Collect the active golden pulse. Each pulse wakes the next one."
+                    : "The mural at the far right is awake. Press Space beside it.",
+            label: "echoes",
+            current: collected + muralHeard,
+            total: 4,
+        });
+    }
+
+    _emitTraversalProgress(objective, detail, phase) {
+        const start = W * 0.18;
+        const end = W - 60;
+        const raw = (this.hero.x - start) / Math.max(1, end - start);
+        const bucket = Phaser.Math.Clamp(Math.floor(raw * 10), 0, 10);
+        if (bucket === this.lastProgressBucket) return;
+        this.lastProgressBucket = bucket;
+        gameEvents.emit("chapter:progress", {
+            objective,
+            detail,
+            label: "distance",
+            current: bucket,
+            total: 10,
+            phase,
+        });
+    }
+
+    _emitFearProgress() {
+        if (!this.fearGate) return;
+        const start = W * 0.18;
+        const end = this.fearGate.x;
+        const raw = (this.hero.x - start) / Math.max(1, end - start);
+        const bucket = Phaser.Math.Clamp(Math.floor(raw * 10), 0, 10);
+        const phase = this.fearSafe ? "Steady pulse — move" : "Fear stirs — pause";
+        if (
+            bucket === this.lastProgressBucket &&
+            phase === this.lastFearPhase
+        ) {
+            return;
+        }
+        this.lastProgressBucket = bucket;
+        this.lastFearPhase = phase;
+        gameEvents.emit("chapter:progress", {
+            objective: "Cross the fear field with presence.",
+            detail: "Move only during the steady pulse. If the field turns dangerous, stop and breathe.",
+            label: "threshold",
+            current: bucket,
+            total: 10,
+            phase,
+        });
     }
 
     // ------------------------------------------------------------------
@@ -884,6 +981,13 @@ export default class ChapterScene extends Phaser.Scene {
             ) {
                 this._completeChapter();
             }
+            if (!this.completed) {
+                this._emitTraversalProgress(
+                    "Follow Kavi beyond the city.",
+                    "Hold right through the fog until you reach the threshold gate.",
+                    "Open road"
+                );
+            }
         }
 
         // Chapter 5: pulse cycle + shadow waves
@@ -914,6 +1018,7 @@ export default class ChapterScene extends Phaser.Scene {
                 if (this.fearGate && Math.abs(this.fearGate.x - this.hero.x) < 40) {
                     this._completeChapter();
                 }
+                if (!this.completed) this._emitFearProgress();
             } else {
                 // Trial not started yet
                 vx = 0;

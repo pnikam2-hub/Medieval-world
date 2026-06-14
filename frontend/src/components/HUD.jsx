@@ -10,9 +10,17 @@ export default function HUD({
     onBackToMap,
     onOpenSettings,
     hint,
+    progress,
 }) {
     const state = useGameStore();
     const lanternPct = Math.round(state.lantern * 100);
+    const hasProgress =
+        progress &&
+        (progress.objective || progress.detail || progress.total || progress.phase);
+    const progressPct =
+        progress?.total > 0
+            ? Math.min(100, Math.round((progress.current / progress.total) * 100))
+            : null;
 
     return (
         <div className="absolute inset-0 z-20 pointer-events-none">
@@ -96,6 +104,51 @@ export default function HUD({
                 >
                     {chapterTitle}
                 </h2>
+                {hasProgress && (
+                    <div
+                        className="mt-4 w-[min(360px,calc(100vw-2rem))] crystal rounded-sm px-4 py-3"
+                        data-testid="hud-objective"
+                    >
+                        <p className="text-[10px] uppercase tracking-[0.35em] text-amber-200/80">
+                            Objective
+                        </p>
+                        {progress.objective && (
+                            <p
+                                className="font-mythic text-lg text-neutral-100 mt-1 leading-snug"
+                                data-testid="hud-objective-text"
+                            >
+                                {progress.objective}
+                            </p>
+                        )}
+                        {progress.detail && (
+                            <p
+                                className="text-xs text-neutral-400 mt-2 leading-relaxed"
+                                data-testid="hud-objective-detail"
+                            >
+                                {progress.detail}
+                            </p>
+                        )}
+                        {progressPct !== null && (
+                            <div className="mt-3">
+                                <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-amber-300/80 transition-all duration-500"
+                                        style={{ width: `${progressPct}%` }}
+                                    />
+                                </div>
+                                <p className="text-[10px] uppercase tracking-[0.25em] text-neutral-500 mt-2">
+                                    {progress.label || "Progress"} ·{" "}
+                                    {progress.current}/{progress.total}
+                                </p>
+                            </div>
+                        )}
+                        {progress.phase && (
+                            <p className="text-[10px] uppercase tracking-[0.3em] text-amber-200/70 mt-3">
+                                {progress.phase}
+                            </p>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Hint banner */}
