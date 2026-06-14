@@ -49,6 +49,7 @@ export default class ChapterScene extends Phaser.Scene {
         else if (chapterId === 3) this._setupChapter3();
         else if (chapterId === 4) this._setupChapter4();
         else if (chapterId === 5) this._setupChapter5();
+        else if (chapterId === 6) this._setupChapter6();
 
         // Mirror lens toggle from React
         this._onMirror = (active) => {
@@ -167,6 +168,20 @@ export default class ChapterScene extends Phaser.Scene {
             dark.fillStyle(0x05050a, 1);
             dark.fillRect(0, 0, W, H);
             this.bgLayer.add(dark);
+        }
+
+        if ([6].includes(this.chapterId)) {
+            const beyond = this.add.graphics();
+            beyond.fillGradientStyle(0x060706, 0x080a10, 0x10120c, 0x060606, 1);
+            beyond.fillRect(0, 0, W, H);
+            beyond.fillStyle(0xfadb5f, 0.05);
+            beyond.fillEllipse(W * 0.62, H * 0.52, W * 0.75, H * 0.8);
+            beyond.lineStyle(1, 0xfadb5f, 0.1);
+            for (let i = 0; i < 8; i++) {
+                const y = 90 + i * 42;
+                beyond.lineBetween(W * 0.08, y, W * 0.92, y + Math.sin(i) * 18);
+            }
+            this.bgLayer.add(beyond);
         }
 
         // Ground
@@ -605,6 +620,100 @@ export default class ChapterScene extends Phaser.Scene {
         this._emitFearProgress();
     }
 
+    // ------------------------------------------------------------------
+    // Chapter 6: Threshold Crossing - collect vows, then cross
+    // ------------------------------------------------------------------
+    _setupChapter6() {
+        this.thresholdAnchors = [];
+        this.thresholdGateOpen = false;
+        this.thresholdGateHintShown = false;
+
+        const entryGate = this.add.container(W * 0.16, H - 110);
+        const entry = this.add.graphics();
+        entry.lineStyle(1, 0x8a6f24, 0.5);
+        entry.strokeRoundedRect(-18, -58, 36, 58, 4);
+        entry.fillStyle(0xfadb5f, 0.04);
+        entry.fillRoundedRect(-18, -58, 36, 58, 4);
+        entryGate.add(entry);
+        this.worldLayer.add(entryGate);
+
+        const gate = this.add.container(W - 70, H - 110);
+        const frame = this.add.graphics();
+        frame.lineStyle(2, 0xd4af37, 0.45);
+        frame.strokeRoundedRect(-24, -70, 48, 70, 5);
+        frame.fillStyle(0xfadb5f, 0.05);
+        frame.fillRoundedRect(-24, -70, 48, 70, 5);
+        const core = this.add.circle(0, -35, 10, 0xfadb5f, 0.08);
+        core.setBlendMode(Phaser.BlendModes.ADD);
+        gate.add([frame, core]);
+        gate.kind = "second-gate";
+        this._attachMirrorLabels(gate, "Second gate", "Commitment becomes passage", -84);
+        this.worldLayer.add(gate);
+        this.secondGate = gate;
+        this.secondGateCore = core;
+
+        const vows = [
+            {
+                x: 0.34,
+                surface: "I will be ready first",
+                hidden: "Begin before certainty",
+            },
+            {
+                x: 0.52,
+                surface: "I should go alone",
+                hidden: "Accept help without shrinking",
+            },
+            {
+                x: 0.7,
+                surface: "I must not change",
+                hidden: "Let the path remake me",
+            },
+        ];
+
+        vows.forEach((vow, idx) => {
+            const anchor = this.add.container(W * vow.x, H - 88);
+            const ring = this.add.circle(0, 0, 18, 0xfadb5f, 0);
+            ring.setStrokeStyle(1, 0xfadb5f, 0.65);
+            ring.setBlendMode(Phaser.BlendModes.ADD);
+            const diamond = this.add.graphics();
+            diamond.fillStyle(0xd4af37, 0.85);
+            diamond.fillPoints(
+                [
+                    { x: 0, y: -8 },
+                    { x: 8, y: 0 },
+                    { x: 0, y: 8 },
+                    { x: -8, y: 0 },
+                ],
+                true
+            );
+            diamond.setBlendMode(Phaser.BlendModes.ADD);
+            this.tweens.add({
+                targets: ring,
+                scale: { from: 0.75, to: 1.45 },
+                alpha: { from: 0.8, to: 0.1 },
+                duration: 1700,
+                repeat: -1,
+                ease: "sine.out",
+            });
+            anchor.add([ring, diamond]);
+            anchor.kind = "threshold-anchor";
+            anchor.idx = idx;
+            anchor.collected = false;
+            this._attachMirrorLabels(anchor, vow.surface, vow.hidden, -34);
+            this.worldLayer.add(anchor);
+            this.thresholdAnchors.push(anchor);
+        });
+
+        this._showNarration(
+            "Beyond the first gate, the world is not brighter. It is simply more honest."
+        );
+        this._emitChapter6Progress();
+        gameEvents.emit(
+            "hud:hint",
+            "Collect the three threshold vows, then cross the second gate."
+        );
+    }
+
     _spawnKavi() {
         if (this.kaviSpawned) return;
         this.kaviSpawned = true;
@@ -725,9 +834,11 @@ export default class ChapterScene extends Phaser.Scene {
             ...(this.citizens || []),
             ...(this.pulses || []),
             ...(this.trailPulses || []),
+            ...(this.thresholdAnchors || []).filter((a) => !a.collected),
             this.tara,
             this.mural,
             this.shadowTwin,
+            this.secondGate,
         ].filter(Boolean);
 
         targets.forEach((t) => {
@@ -800,6 +911,16 @@ export default class ChapterScene extends Phaser.Scene {
                     label: "Listen to mural",
                 });
             }
+        } else if (this.chapterId === 6) {
+            (this.thresholdAnchors || [])
+                .filter((a) => !a.collected)
+                .forEach((a) =>
+                    candidates.push({
+                        target: a,
+                        range: 58,
+                        label: "Take vow",
+                    })
+                );
         }
 
         let nearest = null;
@@ -860,6 +981,15 @@ export default class ChapterScene extends Phaser.Scene {
                     ? "Stand beside the brightest heartbeat pulse, then press Space."
                     : "Stand beside the mural at the far right, then press Space."
             );
+        } else if (this.chapterId === 6) {
+            const collected =
+                this.thresholdAnchors?.filter((a) => a.collected).length || 0;
+            gameEvents.emit(
+                "hud:hint",
+                collected < 3
+                    ? "Stand beside a golden vow, then press Space."
+                    : "The second gate is awake. Walk through it."
+            );
         }
     }
 
@@ -902,6 +1032,14 @@ export default class ChapterScene extends Phaser.Scene {
                 gameEvents.emit("script:start", { name: "mural-dialogue" });
                 this._afterDialogue = () => this._completeChapter();
                 return;
+            }
+            this._showNoTargetHint();
+        } else if (this.chapterId === 6) {
+            for (const anchor of this.thresholdAnchors || []) {
+                if (Math.abs(anchor.x - this.hero.x) < 58 && !anchor.collected) {
+                    this._collectThresholdAnchor(anchor);
+                    return;
+                }
             }
             this._showNoTargetHint();
         }
@@ -949,6 +1087,40 @@ export default class ChapterScene extends Phaser.Scene {
             gameEvents.emit("hud:hint", "Approach the mural and listen.");
         }
         this._emitChapter2Progress();
+    }
+
+    _collectThresholdAnchor(anchor) {
+        anchor.collected = true;
+        this.tweens.add({
+            targets: anchor,
+            scale: 0,
+            alpha: 0,
+            duration: 520,
+            onComplete: () => anchor.destroy(),
+        });
+        gameEvents.emit("lantern:adjust", 0.07);
+        gameEvents.emit("fx:flicker");
+        this._emitChapter6Progress();
+
+        const allCollected = this.thresholdAnchors.every((a) => a.collected);
+        if (allCollected && !this.thresholdGateOpen) {
+            this.thresholdGateOpen = true;
+            if (this.secondGateCore) {
+                this.tweens.add({
+                    targets: this.secondGateCore,
+                    alpha: { from: 0.12, to: 0.55 },
+                    scale: { from: 1, to: 2.2 },
+                    duration: 900,
+                    yoyo: true,
+                    repeat: -1,
+                    ease: "sine.inOut",
+                });
+            }
+            gameEvents.emit(
+                "hud:hint",
+                "The second gate opens. Walk right and cross."
+            );
+        }
     }
 
     _checkChapter1Progress() {
@@ -1046,6 +1218,29 @@ export default class ChapterScene extends Phaser.Scene {
             current: bucket,
             total: 10,
             phase,
+        });
+    }
+
+    _emitChapter6Progress() {
+        if (!this.thresholdAnchors) return;
+        const collected = this.thresholdAnchors.filter((a) => a.collected).length;
+        const gateReached =
+            this.thresholdGateOpen && this.secondGate
+                ? Math.abs(this.secondGate.x - this.hero.x) < 48
+                : false;
+        gameEvents.emit("chapter:progress", {
+            objective:
+                collected < 3
+                    ? "Gather the vows that open the second world."
+                    : "Cross the second gate.",
+            detail:
+                collected < 3
+                    ? "Use Mirror to read each vow beneath its surface, then press Space beside it."
+                    : "The gate has answered. Walk right through the opening.",
+            label: "vows",
+            current: collected + (gateReached ? 1 : 0),
+            total: 4,
+            phase: this.thresholdGateOpen ? "Gate open" : "Between worlds",
         });
     }
 
@@ -1165,6 +1360,33 @@ export default class ChapterScene extends Phaser.Scene {
             });
         }
 
+        // Chapter 6: collect vows, then cross the second gate
+        if (this.chapterId === 6 && canMove) {
+            if (this.thresholdGateOpen) {
+                if (
+                    this.secondGate &&
+                    Math.abs(this.secondGate.x - this.hero.x) < 42
+                ) {
+                    this._completeChapter();
+                }
+            } else if (
+                this.secondGate &&
+                Math.abs(this.secondGate.x - this.hero.x) < 90
+            ) {
+                vx -= Math.max(0, vx) * 0.8;
+                if (!this.thresholdGateHintShown) {
+                    this.thresholdGateHintShown = true;
+                    gameEvents.emit(
+                        "hud:hint",
+                        "The gate waits for three vows before it opens."
+                    );
+                }
+            } else {
+                this.thresholdGateHintShown = false;
+            }
+            if (!this.completed) this._emitChapter6Progress();
+        }
+
         // Clamp hero position
         this.hero.x = Phaser.Math.Clamp(this.hero.x + vx, 30, W - 30);
         this.hero.y = Phaser.Math.Clamp(
@@ -1201,6 +1423,7 @@ export default class ChapterScene extends Phaser.Scene {
         if (this.chapterId === 2) intensity = 0.05 * (1 - (this._colorBloom || 0));
         if (this.chapterId === 4) intensity = 0.1 * this.fogStrength;
         if (this.chapterId === 5) intensity = 0.07;
+        if (this.chapterId === 6) intensity = 0.04;
         if (this.chapterId === 3) intensity = 0.03;
         for (let i = 0; i < bands; i++) {
             const y = 80 + i * 65 + Math.sin((this._fogOffset + i * 20) * 0.05) * 6;

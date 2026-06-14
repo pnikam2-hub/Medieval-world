@@ -22,16 +22,16 @@ function JournalContent({ id, initialNote, chapter, textSize }) {
 
     const save = () => {
         gameStore.saveJournalNote(id, note.trim());
-        if (id < 5) {
-            navigate("/map");
-        } else {
+        if (id === 5) {
             navigate("/threshold");
+        } else {
+            navigate("/map");
         }
     };
 
     const skip = () => {
-        if (id < 5) navigate("/map");
-        else navigate("/threshold");
+        if (id === 5) navigate("/threshold");
+        else navigate("/map");
     };
 
     return (

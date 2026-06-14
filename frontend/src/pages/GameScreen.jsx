@@ -27,6 +27,7 @@ const CHAPTER_AMBIENT = {
     3: "cave",
     4: "road",
     5: "fear",
+    6: "road",
 };
 
 export default function GameScreen() {
@@ -121,6 +122,7 @@ export default function GameScreen() {
     const unlockedQuality = useMemo(() => {
         if (completedChapterId === 3) return "Truthful Response";
         if (completedChapterId === 5) return "Presence";
+        if (completedChapterId === 6) return "Commitment";
         return null;
     }, [completedChapterId]);
 

@@ -66,8 +66,20 @@ export const CHAPTERS = [
         journalQuestion: "What is one small step you can take even while afraid?",
         helperLine: "Or a way through. — You",
     },
-    // Locked / coming-soon stages
-    { id: 6, title: "Threshold Crossing", subtitle: "First gate, second world", unlocked: false, kind: "locked" },
+    {
+        id: 6,
+        title: "Threshold Crossing",
+        subtitle: "First gate, second world",
+        unlocked: true,
+        kind: "threshold",
+        narration:
+            "Beyond the first gate, the world is not brighter. It is simply more honest.",
+        endText:
+            "You cross because the old world can no longer hold the whole truth of you.",
+        journalQuestion:
+            "What promise will help you keep walking when the path no longer feels familiar?",
+        helperLine: "A threshold is a question you answer with your feet. - Kavi",
+    },
     { id: 7, title: "Magical Helper", subtitle: "The Mirror Lens is given", unlocked: false, kind: "locked" },
     { id: 8, title: "Road of Trials", subtitle: "Small fires, larger truths", unlocked: false, kind: "locked" },
     { id: 9, title: "Night Sea Journey", subtitle: "Rhythmic grief", unlocked: false, kind: "locked" },
