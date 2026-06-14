@@ -334,6 +334,7 @@ export default function ThresholdCard({ heroName, accent = "gold", quote }) {
                                         dy={i === 0 ? 0 : lineH}
                                     >
                                         {i === 0 ? `\u201C${ln}` : ln}
+                                        {i < lines.length - 1 ? " " : ""}
                                         {i === lines.length - 1 ? "\u201D" : ""}
                                     </tspan>
                                 ))}

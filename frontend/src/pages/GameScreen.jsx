@@ -6,6 +6,7 @@ import DialogueBox from "@/components/DialogueBox";
 import MobileControls from "@/components/MobileControls";
 import MirrorOverlay from "@/components/MirrorOverlay";
 import SettingsPanel from "@/components/SettingsPanel";
+import ChapterCompleteOverlay from "@/components/ChapterCompleteOverlay";
 import { CHAPTERS } from "@/game/chapters";
 import { gameStore, useGameStore } from "@/game/useGameStore";
 import { useDialogueSequencer } from "@/game/useDialogueSequencer";
@@ -41,6 +42,7 @@ export default function GameScreen() {
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [muted, setMutedState] = useState(isMuted());
     const [volume, setVolumeState] = useState(getVolume());
+    const [completedChapterId, setCompletedChapterId] = useState(null);
 
     const mirrorRef = useRef(mirrorActive);
     const completedRef = useRef(false);
@@ -81,6 +83,7 @@ export default function GameScreen() {
     useEffect(() => {
         gameStore.set({ currentChapter: id });
         completedRef.current = false;
+        setCompletedChapterId(null);
     }, [id]);
 
     // Ambient drone variant per chapter
@@ -97,8 +100,26 @@ export default function GameScreen() {
         dialogueRef,
         mirrorRef,
         completedRef,
-        navigate,
+        onChapterComplete: (chapterId) => {
+            setCompletedChapterId(chapterId);
+        },
     });
+
+    const completedChapter = useMemo(
+        () => CHAPTERS.find((c) => c.id === completedChapterId),
+        [completedChapterId]
+    );
+
+    const unlockedQuality = useMemo(() => {
+        if (completedChapterId === 3) return "Truthful Response";
+        if (completedChapterId === 5) return "Presence";
+        return null;
+    }, [completedChapterId]);
+
+    const continueAfterCompletion = useCallback(() => {
+        if (!completedChapterId) return;
+        navigate(`/journal/${completedChapterId}`);
+    }, [completedChapterId, navigate]);
 
     // Keyboard: M = mirror, J = journal
     useEffect(() => {
@@ -185,6 +206,16 @@ export default function GameScreen() {
                 choicePrompt={dialogue.choicePrompt}
                 onAdvance={dialogue.advance}
                 onChoose={dialogue.choose}
+            />
+
+            <ChapterCompleteOverlay
+                open={!!completedChapter}
+                chapterId={completedChapter?.id}
+                chapterTitle={completedChapter?.title}
+                endText={completedChapter?.endText}
+                unlockedQuality={unlockedQuality}
+                accent={state.hero?.accent}
+                onContinue={continueAfterCompletion}
             />
 
             <MobileControls
