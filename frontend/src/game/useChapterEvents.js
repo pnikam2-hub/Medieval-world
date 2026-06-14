@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import { gameEvents } from "@/game/events";
 import { gameStore } from "@/game/useGameStore";
 import { buildScript } from "@/game/dialogueScript";
-import { CHAPTERS } from "@/game/chapters";
 import {
     playHeartbeat,
     playLanternChime,
@@ -12,20 +11,14 @@ import {
  * Subscribes to all Phaser-driven gameEvents (dialogue:open, script:start,
  * chapter:complete, hud:hint, lantern:adjust, fx:flicker, fx:bloom) and
  * routes them to React state via the provided handlers.
- *
- * @param {object} args
- * @param {(text:string|null)=>void} args.setHint - hint banner setter
- * @param {{current:object}} args.dialogueRef - ref to dialogue sequencer
- * @param {{current:boolean}} args.mirrorRef - ref to mirror lens active flag
- * @param {{current:boolean}} args.completedRef - ref guarding chapter completion
- * @param {(path:string)=>void} args.navigate - react-router navigate
  */
 export function useChapterEvents({
     setHint,
+    setProgress,
     dialogueRef,
     mirrorRef,
     completedRef,
-    navigate,
+    onChapterComplete,
 }) {
     const hintTimerRef = useRef(null);
 
@@ -43,7 +36,6 @@ export function useChapterEvents({
         const offScript = gameEvents.on("script:start", (payload) => {
             let lines = buildScript(payload);
             if (!lines || lines.length === 0) return;
-            // Drop mirror-only lines if Mirror Lens is currently off
             if (!mirrorRef.current) {
                 lines = lines.filter((l) => !l.mirrorOnly);
             }
@@ -72,30 +64,26 @@ export function useChapterEvents({
             dialogueRef.current.enqueue(lines, onClose);
         });
 
-        const offComplete = gameEvents.on("chapter:complete", ({ chapterId }) => {
-            completedRef.current = true;
-            gameStore.completeChapter(chapterId);
-            gameStore.adjustLantern(0.18);
-            if (chapterId === 5) gameStore.unlockQuality("presence");
-            playHeartbeat();
-
-            const ch = CHAPTERS.find((c) => c.id === chapterId);
-            dialogueRef.current.enqueue(
-                [
-                    {
-                        speaker: null,
-                        text: ch.endText,
-                        kind: "narration",
-                    },
-                ],
-                () => navigate(`/journal/${chapterId}`)
-            );
-        });
+        const offComplete = gameEvents.on(
+            "chapter:complete",
+            ({ chapterId }) => {
+                completedRef.current = true;
+                gameStore.completeChapter(chapterId);
+                gameStore.adjustLantern(0.18);
+                if (chapterId === 5) gameStore.unlockQuality("presence");
+                playHeartbeat();
+                onChapterComplete?.(chapterId);
+            }
+        );
 
         const offHint = gameEvents.on("hud:hint", (text) => {
             setHint(text);
             if (hintTimerRef.current) clearTimeout(hintTimerRef.current);
             hintTimerRef.current = setTimeout(() => setHint(null), 4200);
+        });
+
+        const offProgress = gameEvents.on("chapter:progress", (payload) => {
+            setProgress?.(payload);
         });
 
         const offLantern = gameEvents.on("lantern:adjust", (delta) => {
@@ -112,9 +100,17 @@ export function useChapterEvents({
             offScript();
             offComplete();
             offHint();
+            offProgress();
             offLantern();
             offFlicker();
             if (hintTimerRef.current) clearTimeout(hintTimerRef.current);
         };
-    }, [navigate, setHint, dialogueRef, mirrorRef, completedRef]);
+    }, [
+        setHint,
+        setProgress,
+        dialogueRef,
+        mirrorRef,
+        completedRef,
+        onChapterComplete,
+    ]);
 }
