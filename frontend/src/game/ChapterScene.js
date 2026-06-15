@@ -50,6 +50,7 @@ export default class ChapterScene extends Phaser.Scene {
         else if (chapterId === 4) this._setupChapter4();
         else if (chapterId === 5) this._setupChapter5();
         else if (chapterId === 6) this._setupChapter6();
+        else if (chapterId === 7) this._setupChapter7();
 
         // Mirror lens toggle from React
         this._onMirror = (active) => {
@@ -182,6 +183,34 @@ export default class ChapterScene extends Phaser.Scene {
                 beyond.lineBetween(W * 0.08, y, W * 0.92, y + Math.sin(i) * 18);
             }
             this.bgLayer.add(beyond);
+        }
+
+        if ([7].includes(this.chapterId)) {
+            const helperField = this.add.graphics();
+            helperField.fillGradientStyle(0x080908, 0x0b0a10, 0x15120c, 0x060606, 1);
+            helperField.fillRect(0, 0, W, H);
+            helperField.fillStyle(0xfadb5f, 0.055);
+            helperField.fillEllipse(W * 0.48, H * 0.46, W * 0.62, H * 0.62);
+            helperField.fillStyle(0x91c5ff, 0.035);
+            helperField.fillEllipse(W * 0.72, H * 0.36, W * 0.42, H * 0.5);
+            this.bgLayer.add(helperField);
+
+            for (let i = 0; i < 14; i++) {
+                const lx = 90 + Math.random() * (W - 180);
+                const ly = 70 + Math.random() * (H - 210);
+                const shard = this.add.circle(lx, ly, 1.8, 0xfadb5f, 0.8);
+                shard.setBlendMode(Phaser.BlendModes.ADD);
+                this.tweens.add({
+                    targets: shard,
+                    alpha: { from: 0.25, to: 0.95 },
+                    y: ly - 6,
+                    duration: 1300 + Math.random() * 1800,
+                    yoyo: true,
+                    repeat: -1,
+                    ease: "sine.inOut",
+                });
+                this.bgLayer.add(shard);
+            }
         }
 
         // Ground
@@ -714,6 +743,109 @@ export default class ChapterScene extends Phaser.Scene {
         );
     }
 
+    // ------------------------------------------------------------------
+    // Chapter 7: Magical Helper - Tara teaches the deeper Mirror Lens
+    // ------------------------------------------------------------------
+    _setupChapter7() {
+        this.helperPhase = "tara-teaching";
+        this.helperShardsCollected = 0;
+        this.kaviSeenDeep = false;
+        this.memoryShards = [];
+
+        const tara = this._makeNpc(W * 0.34, H - 110, "Tara", {
+            surfaceLabel: "Teacher",
+            hiddenLabel: "Keeper of clear seeing",
+        });
+        const cloak = this.add.graphics();
+        cloak.lineStyle(1, 0xfadb5f, 0.45);
+        cloak.strokeCircle(0, -40, 18);
+        tara.add(cloak);
+        tara.kind = "tara-helper";
+        this.worldLayer.add(tara);
+        this.tara = tara;
+
+        this._spawnKavi();
+        this._attachMirrorLabels(
+            this.kavi,
+            "Tiny brave thing",
+            "Afraid of being left behind",
+            -18
+        );
+        this.kavi.deeperText =
+            "Every companion I have had eventually walked on without me.";
+
+        const shardData = [
+            {
+                x: 0.52,
+                surface: "Old joke",
+                hidden: "Fear hidden as cleverness",
+                deep: "I joke first so no one hears how scared I am.",
+            },
+            {
+                x: 0.68,
+                surface: "Small silence",
+                hidden: "An unnamed goodbye",
+                deep: "Someone left before I knew how to ask them to stay.",
+            },
+            {
+                x: 0.84,
+                surface: "Bright mask",
+                hidden: "A wish to be chosen",
+                deep: "I shine so brightly because I am afraid I will be missed.",
+            },
+        ];
+
+        shardData.forEach((data, idx) => {
+            const shard = this.add.container(W * data.x, H - 86);
+            const ring = this.add.circle(0, 0, 16, 0xfadb5f, 0);
+            ring.setStrokeStyle(1, 0xfadb5f, 0.55);
+            ring.setBlendMode(Phaser.BlendModes.ADD);
+            const gem = this.add.graphics();
+            gem.fillStyle(0xfadb5f, 0.75);
+            gem.fillPoints(
+                [
+                    { x: 0, y: -10 },
+                    { x: 10, y: 0 },
+                    { x: 0, y: 10 },
+                    { x: -10, y: 0 },
+                ],
+                true
+            );
+            gem.setBlendMode(Phaser.BlendModes.ADD);
+            this.tweens.add({
+                targets: ring,
+                scale: { from: 0.7, to: 1.5 },
+                alpha: { from: 0.8, to: 0.08 },
+                duration: 1500 + idx * 120,
+                repeat: -1,
+                ease: "sine.out",
+            });
+            shard.add([ring, gem]);
+            shard.kind = "memory-shard";
+            shard.collected = false;
+            shard.deeperText = data.deep;
+            this._attachMirrorLabels(shard, data.surface, data.hidden, -34);
+            this.worldLayer.add(shard);
+            this.memoryShards.push(shard);
+        });
+
+        this._showNarration(
+            "Tara stands at the edge of the second world, holding something small enough to fit in a palm and large enough to undo every lie you have ever told yourself."
+        );
+        this._emitChapter7Progress();
+        this._afterDialogue = () => {
+            gameEvents.emit("script:start", { name: "tara-lens-dialogue" });
+            this._afterDialogue = () => {
+                this.helperPhase = "kavi-practice";
+                this._emitChapter7Progress();
+                gameEvents.emit(
+                    "hud:hint",
+                    "Turn Mirror on near Kavi, then press Space to see deeper."
+                );
+            };
+        };
+    }
+
     _spawnKavi() {
         if (this.kaviSpawned) return;
         this.kaviSpawned = true;
@@ -835,10 +967,12 @@ export default class ChapterScene extends Phaser.Scene {
             ...(this.pulses || []),
             ...(this.trailPulses || []),
             ...(this.thresholdAnchors || []).filter((a) => !a.collected),
+            ...(this.memoryShards || []).filter((s) => !s.collected),
             this.tara,
             this.mural,
             this.shadowTwin,
             this.secondGate,
+            this.kavi,
         ].filter(Boolean);
 
         targets.forEach((t) => {
@@ -921,6 +1055,25 @@ export default class ChapterScene extends Phaser.Scene {
                         label: "Take vow",
                     })
                 );
+        } else if (this.chapterId === 7) {
+            if (this.helperPhase === "kavi-practice" && this.kavi) {
+                candidates.push({
+                    target: this.kavi,
+                    range: 86,
+                    label: "See Kavi",
+                });
+            }
+            if (this.helperPhase === "shards") {
+                (this.memoryShards || [])
+                    .filter((s) => !s.collected)
+                    .forEach((s) =>
+                        candidates.push({
+                            target: s,
+                            range: 62,
+                            label: "See shard",
+                        })
+                    );
+            }
         }
 
         let nearest = null;
@@ -990,6 +1143,14 @@ export default class ChapterScene extends Phaser.Scene {
                     ? "Stand beside a golden vow, then press Space."
                     : "The second gate is awake. Walk through it."
             );
+        } else if (this.chapterId === 7) {
+            if (!this.mirrorActive) {
+                gameEvents.emit("hud:hint", "Turn Mirror on, then press Space near Kavi or a memory shard.");
+            } else if (this.helperPhase === "kavi-practice") {
+                gameEvents.emit("hud:hint", "Stand near Kavi and press Space to see what he hides.");
+            } else if (this.helperPhase === "shards") {
+                gameEvents.emit("hud:hint", "Find a golden memory shard and press Space while Mirror is on.");
+            }
         }
     }
 
@@ -1039,6 +1200,39 @@ export default class ChapterScene extends Phaser.Scene {
                 if (Math.abs(anchor.x - this.hero.x) < 58 && !anchor.collected) {
                     this._collectThresholdAnchor(anchor);
                     return;
+                }
+            }
+            this._showNoTargetHint();
+        } else if (this.chapterId === 7) {
+            if (this.helperPhase === "kavi-practice" && this.kavi) {
+                if (Math.abs(this.kavi.x - this.hero.x) < 86) {
+                    if (!this.mirrorActive) {
+                        this._showNoTargetHint();
+                        return;
+                    }
+                    this.kaviSeenDeep = true;
+                    this.helperPhase = "shards";
+                    this._revealDeepTruth(this.kavi, this.kavi.deeperText, -58);
+                    gameEvents.emit("lantern:adjust", 0.08);
+                    gameEvents.emit(
+                        "hud:hint",
+                        "Kavi's truth is visible. Find the three memory shards."
+                    );
+                    this._emitChapter7Progress();
+                    return;
+                }
+            }
+
+            if (this.helperPhase === "shards") {
+                for (const shard of this.memoryShards || []) {
+                    if (Math.abs(shard.x - this.hero.x) < 62 && !shard.collected) {
+                        if (!this.mirrorActive) {
+                            this._showNoTargetHint();
+                            return;
+                        }
+                        this._collectMemoryShard(shard);
+                        return;
+                    }
                 }
             }
             this._showNoTargetHint();
@@ -1123,6 +1317,68 @@ export default class ChapterScene extends Phaser.Scene {
         }
     }
 
+    _revealDeepTruth(target, text, yOffset = -54) {
+        if (!target || !text) return;
+        if (target.deepLabel) {
+            target.deepLabel.setText(text);
+        } else {
+            const label = this.add.text(0, yOffset, text, {
+                fontFamily: "Cormorant Garamond, serif",
+                fontSize: "15px",
+                color: "#fff2a6",
+                fontStyle: "italic",
+                align: "center",
+                wordWrap: { width: 230 },
+            });
+            label.setOrigin(0.5, 1);
+            label.setAlpha(0);
+            label.setBlendMode(Phaser.BlendModes.ADD);
+            target.add(label);
+            target.deepLabel = label;
+        }
+        this.tweens.killTweensOf(target.deepLabel);
+        this.tweens.add({
+            targets: target.deepLabel,
+            alpha: 1,
+            y: yOffset - 8,
+            duration: 420,
+            ease: "sine.out",
+        });
+    }
+
+    _collectMemoryShard(shard) {
+        shard.collected = true;
+        this.helperShardsCollected += 1;
+        this._revealDeepTruth(shard, shard.deeperText, -58);
+        this.tweens.add({
+            targets: shard,
+            alpha: 0,
+            scale: 0.2,
+            duration: 1500,
+            delay: 900,
+            ease: "sine.inOut",
+            onComplete: () => shard.destroy(),
+        });
+        gameEvents.emit("lantern:adjust", 0.07);
+        gameEvents.emit("fx:flicker");
+        this._emitChapter7Progress();
+
+        const allCollected = this.memoryShards.every((s) => s.collected);
+        if (allCollected && !this.helperClosingStarted) {
+            this.helperClosingStarted = true;
+            this.helperPhase = "complete";
+            this._emitChapter7Progress();
+            gameEvents.emit(
+                "hud:hint",
+                "The Mirror steadies. Tara is ready to name what you learned."
+            );
+            this.time.delayedCall(1100, () => {
+                this._afterDialogue = () => this._completeChapter();
+                gameEvents.emit("script:start", { name: "tara-lens-closing" });
+            });
+        }
+    }
+
     _checkChapter1Progress() {
         const allSpoken = this.citizens.every((c) => c.spoken);
         const allPulses = this.pulses.every((p) => p.collected);
@@ -1146,6 +1402,7 @@ export default class ChapterScene extends Phaser.Scene {
         if (this.completed) return;
         this.completed = true;
         if (this.chapterId === 2) this._emitChapter2Progress();
+        if (this.chapterId === 7) this._emitChapter7Progress();
         gameEvents.emit("chapter:complete", { chapterId: this.chapterId });
     }
 
@@ -1241,6 +1498,38 @@ export default class ChapterScene extends Phaser.Scene {
             current: collected + (gateReached ? 1 : 0),
             total: 4,
             phase: this.thresholdGateOpen ? "Gate open" : "Between worlds",
+        });
+    }
+
+    _emitChapter7Progress() {
+        if (!this.memoryShards) return;
+        const shardCount = this.memoryShards.filter((s) => s.collected).length;
+        const kaviSeen = this.kaviSeenDeep ? 1 : 0;
+        const current = this.helperPhase === "complete" ? 4 : kaviSeen + shardCount;
+        let objective = "Learn the deeper Mirror Lens from Tara.";
+        let detail = "Listen to Tara's teaching, then look at Kavi with the Mirror.";
+        if (this.helperPhase === "kavi-practice") {
+            objective = "See Kavi beneath the bright surface.";
+            detail = "Turn Mirror on near Kavi, then press Space.";
+        } else if (this.helperPhase === "shards") {
+            objective = "Reveal the memory shards around Kavi's wound.";
+            detail = "Keep Mirror on and press Space beside each golden shard.";
+        } else if (this.helperPhase === "complete") {
+            objective = "Receive the Mirror Lens as a true tool.";
+            detail = "Tara names the lesson: clarity without judgment.";
+        }
+        gameEvents.emit("chapter:progress", {
+            objective,
+            detail,
+            label: "truths",
+            current,
+            total: 4,
+            phase:
+                this.helperPhase === "complete"
+                    ? "Clarity"
+                    : this.helperPhase === "shards"
+                      ? "Memory shards"
+                      : "Mirror lesson",
         });
     }
 
@@ -1424,6 +1713,7 @@ export default class ChapterScene extends Phaser.Scene {
         if (this.chapterId === 4) intensity = 0.1 * this.fogStrength;
         if (this.chapterId === 5) intensity = 0.07;
         if (this.chapterId === 6) intensity = 0.04;
+        if (this.chapterId === 7) intensity = 0.035;
         if (this.chapterId === 3) intensity = 0.03;
         for (let i = 0; i < bands; i++) {
             const y = 80 + i * 65 + Math.sin((this._fogOffset + i * 20) * 0.05) * 6;

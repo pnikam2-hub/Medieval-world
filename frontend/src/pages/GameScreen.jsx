@@ -28,6 +28,7 @@ const CHAPTER_AMBIENT = {
     4: "road",
     5: "fear",
     6: "road",
+    7: "cave",
 };
 
 export default function GameScreen() {
@@ -123,6 +124,7 @@ export default function GameScreen() {
         if (completedChapterId === 3) return "Truthful Response";
         if (completedChapterId === 5) return "Presence";
         if (completedChapterId === 6) return "Commitment";
+        if (completedChapterId === 7) return "Clarity";
         return null;
     }, [completedChapterId]);
 

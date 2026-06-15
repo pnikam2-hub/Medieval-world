@@ -1,4 +1,4 @@
-// 23-stage hero journey definitions. First 5 are playable in MVP.
+// 23-stage hero journey definitions. Early stages are playable in the MVP.
 export const CHAPTERS = [
     {
         id: 1,
@@ -80,7 +80,20 @@ export const CHAPTERS = [
             "What promise will help you keep walking when the path no longer feels familiar?",
         helperLine: "A threshold is a question you answer with your feet. - Kavi",
     },
-    { id: 7, title: "Magical Helper", subtitle: "The Mirror Lens is given", unlocked: false, kind: "locked" },
+    {
+        id: 7,
+        title: "Magical Helper",
+        subtitle: "The Mirror Lens is given",
+        unlocked: true,
+        kind: "helper",
+        narration:
+            "Tara stands at the edge of the second world, holding something small enough to fit in a palm and large enough to undo every lie you have ever told yourself.",
+        endText:
+            "The truth does not wound. The wound was already there. Truth only gives it air to heal.",
+        journalQuestion:
+            "What truth have you been holding the lens away from, and what might soften if you held it steady?",
+        helperLine: "Hold the Mirror steady. Do not glance. See. - Tara",
+    },
     { id: 8, title: "Road of Trials", subtitle: "Small fires, larger truths", unlocked: false, kind: "locked" },
     { id: 9, title: "Night Sea Journey", subtitle: "Rhythmic grief", unlocked: false, kind: "locked" },
     { id: 10, title: "Adventure", subtitle: "Helpers along the river", unlocked: false, kind: "locked" },
@@ -216,4 +229,32 @@ export const KAVI_DIALOGUE = [
     { speaker: "Kavi", text: "Are we lost?" },
     { speaker: "You", text: "Not yet." },
     { speaker: "Kavi", text: "That sounded suspiciously like yes." },
+];
+
+// Chapter 7: Tara teaches the deeper use of the Mirror Lens.
+export const TARA_LENS_DIALOGUE = [
+    { speaker: "Tara", text: "You crossed. Good. Now the real seeing begins." },
+    { speaker: "You", text: "The Mirror felt different at the gate." },
+    {
+        speaker: "Tara",
+        text: "It was only half-awake before. Hold it steady. Do not glance. See.",
+    },
+    { speaker: "You", text: "What will I see?" },
+    {
+        speaker: "Tara",
+        text: "First what hides. Then what hid the hiding. Then the wound that started it all.",
+    },
+    {
+        speaker: "Tara",
+        text: "Kavi carries something unsaid. Look at him with patience.",
+    },
+];
+
+export const TARA_LENS_CLOSING = [
+    {
+        speaker: "Tara",
+        text: "The lens is yours. Use it not to judge, but to understand what someone is protecting.",
+    },
+    { speaker: "Kavi", text: "Thank you. For not looking away." },
+    { speaker: "You", text: "I could not. Not anymore." },
 ];

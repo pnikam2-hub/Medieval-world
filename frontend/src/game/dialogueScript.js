@@ -4,6 +4,8 @@ import {
     MURAL_DIALOGUE,
     SHADOW_DIALOGUE,
     TARA_DIALOGUE,
+    TARA_LENS_CLOSING,
+    TARA_LENS_DIALOGUE,
 } from "@/game/chapters";
 
 // Speaker name -> hidden emotional truth revealed under Mirror Lens
@@ -64,6 +66,12 @@ export function buildScript(payload) {
     }
     if (payload.name === "kavi-dialogue") {
         return KAVI_DIALOGUE.map(withSpeakerLabel);
+    }
+    if (payload.name === "tara-lens-dialogue") {
+        return TARA_LENS_DIALOGUE.map(withSpeakerLabel);
+    }
+    if (payload.name === "tara-lens-closing") {
+        return TARA_LENS_CLOSING.map(withSpeakerLabel);
     }
     if (payload.name === "shadow-dialogue") {
         return [

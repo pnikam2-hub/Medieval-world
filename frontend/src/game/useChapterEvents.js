@@ -71,6 +71,8 @@ export function useChapterEvents({
                 gameStore.completeChapter(chapterId);
                 gameStore.adjustLantern(0.18);
                 if (chapterId === 5) gameStore.unlockQuality("presence");
+                if (chapterId === 6) gameStore.unlockQuality("commitment");
+                if (chapterId === 7) gameStore.unlockQuality("clarity");
                 playHeartbeat();
                 onChapterComplete?.(chapterId);
             }
