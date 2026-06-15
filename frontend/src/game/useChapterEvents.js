@@ -73,6 +73,7 @@ export function useChapterEvents({
                 if (chapterId === 5) gameStore.unlockQuality("presence");
                 if (chapterId === 6) gameStore.unlockQuality("commitment");
                 if (chapterId === 7) gameStore.unlockQuality("clarity");
+                if (chapterId === 8) gameStore.unlockQuality("tenderness");
                 playHeartbeat();
                 onChapterComplete?.(chapterId);
             }

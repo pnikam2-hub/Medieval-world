@@ -1,10 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { gameEvents } from "@/game/events";
 import { gameStore } from "@/game/useGameStore";
-import {
-    SPEAKER_HIDDEN_LABELS,
-    TARA_CHOICE_BLOCK,
-} from "@/game/dialogueScript";
+import { SPEAKER_HIDDEN_LABELS } from "@/game/dialogueScript";
 
 /**
  * Manages a linear, optionally branching dialogue queue.
@@ -25,11 +22,13 @@ export function useDialogueSequencer() {
     const [choicePrompt, setChoicePrompt] = useState(null);
     const queueRef = useRef([]);
     const onCloseRef = useRef(null);
+    const currentChoiceRef = useRef(null);
 
     const closeDialogue = useCallback(() => {
         setOpen(false);
         setChoices(null);
         setChoicePrompt(null);
+        currentChoiceRef.current = null;
         setText("");
         setSpeaker(null);
         setHiddenLabel(null);
@@ -54,9 +53,15 @@ export function useDialogueSequencer() {
         if (next.choice) {
             setChoices(next.choice.options);
             setChoicePrompt(next.choice.prompt);
+            currentChoiceRef.current = {
+                choice: next.choice,
+                speaker: next.speaker || null,
+                hiddenLabel: next.hiddenLabel || null,
+            };
         } else {
             setChoices(null);
             setChoicePrompt(null);
+            currentChoiceRef.current = null;
         }
         setOpen(true);
         gameEvents.emit("scene:dialogue-lock", true);
@@ -64,22 +69,50 @@ export function useDialogueSequencer() {
 
     const choose = useCallback((option) => {
         if (option.lantern) gameStore.adjustLantern(option.lantern);
+        const currentChoice = currentChoiceRef.current;
+        const outcomeSpeaker =
+            option.outcomeSpeaker === undefined
+                ? currentChoice?.speaker || "Tara"
+                : option.outcomeSpeaker;
+        const outcomeHidden =
+            option.outcomeHiddenLabel ||
+            (outcomeSpeaker && SPEAKER_HIDDEN_LABELS[outcomeSpeaker]) ||
+            null;
+
         setChoices(null);
         setChoicePrompt(null);
-        setSpeaker("Tara");
-        setHiddenLabel(SPEAKER_HIDDEN_LABELS.Tara);
-        setKind("speech");
+        setSpeaker(outcomeSpeaker || null);
+        setHiddenLabel(outcomeHidden);
+        setKind(option.kind || "speech");
         setText(option.outcome);
 
+        if (option.event?.name) {
+            gameEvents.emit(option.event.name, option.event.payload || {});
+        }
+
+        if (option.afterLines?.length) {
+            queueRef.current.unshift(...option.afterLines);
+        }
+
         if (!option.advance) {
+            const retrySpeaker =
+                option.retrySpeaker === undefined
+                    ? currentChoice?.speaker || "Tara"
+                    : option.retrySpeaker;
             queueRef.current.unshift({
-                speaker: "Tara",
-                hiddenLabel: SPEAKER_HIDDEN_LABELS.Tara,
-                text: "Try again. Speak from the honest place.",
-                choice: TARA_CHOICE_BLOCK,
+                speaker: retrySpeaker || null,
+                hiddenLabel:
+                    option.retryHiddenLabel ||
+                    (retrySpeaker && SPEAKER_HIDDEN_LABELS[retrySpeaker]) ||
+                    currentChoice?.hiddenLabel ||
+                    null,
+                text: option.retryText || "Try again. Speak from the honest place.",
+                kind: option.retryKind || "speech",
+                choice: currentChoice?.choice,
             });
         } else {
-            gameStore.unlockQuality("truthful-response");
+            if (option.unlockQuality) gameStore.unlockQuality(option.unlockQuality);
+            if (option.id === "honest") gameStore.unlockQuality("truthful-response");
         }
     }, []);
 

@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { gameEvents } from "./events";
+import { TRIAL_FIRES } from "./chapters";
 
 const W = 960;
 const H = 540;
@@ -51,6 +52,7 @@ export default class ChapterScene extends Phaser.Scene {
         else if (chapterId === 5) this._setupChapter5();
         else if (chapterId === 6) this._setupChapter6();
         else if (chapterId === 7) this._setupChapter7();
+        else if (chapterId === 8) this._setupChapter8();
 
         // Mirror lens toggle from React
         this._onMirror = (active) => {
@@ -88,6 +90,11 @@ export default class ChapterScene extends Phaser.Scene {
         };
         gameEvents.on("fear:trial-start", this._onFearTrial);
 
+        this._onTrialFireChoice = (payload) => {
+            if (this.chapterId === 8) this._handleTrialFireChoice(payload);
+        };
+        gameEvents.on("trial-fire:choice", this._onTrialFireChoice);
+
         // Cleanup
         this.events.once("shutdown", () => {
             gameEvents.off("mirror:toggle", this._onMirror);
@@ -95,6 +102,7 @@ export default class ChapterScene extends Phaser.Scene {
             gameEvents.off("dialogue:done", this._onDialogueDone);
             gameEvents.off("scene:dialogue-lock", this._onLock);
             gameEvents.off("fear:trial-start", this._onFearTrial);
+            gameEvents.off("trial-fire:choice", this._onTrialFireChoice);
         });
     }
 
@@ -136,6 +144,18 @@ export default class ChapterScene extends Phaser.Scene {
             hills.fillEllipse(W * 0.2, H - 30, 600, 220);
             hills.fillEllipse(W * 0.7, H - 20, 720, 260);
             this.bgLayer.add(hills);
+        }
+
+        if ([8].includes(this.chapterId)) {
+            const dusk = this.add.graphics();
+            dusk.fillGradientStyle(0x10172a, 0x10172a, 0x24120b, 0x060606, 1);
+            dusk.fillRect(0, 0, W, H);
+            dusk.fillStyle(0xfb8500, 0.07);
+            dusk.fillEllipse(W * 0.28, H * 0.76, W * 0.85, H * 0.32);
+            dusk.fillStyle(0x0c0d10, 1);
+            dusk.fillEllipse(W * 0.26, H - 34, 620, 190);
+            dusk.fillEllipse(W * 0.78, H - 22, 700, 210);
+            this.bgLayer.add(dusk);
         }
 
         if ([3].includes(this.chapterId)) {
@@ -846,6 +866,107 @@ export default class ChapterScene extends Phaser.Scene {
         };
     }
 
+    // ------------------------------------------------------------------
+    // Chapter 8: Road of Trials - answer three small fires with tenderness
+    // ------------------------------------------------------------------
+    _setupChapter8() {
+        this.trialFires = [];
+        this.centralFlameOpen = false;
+        this.centralFlameHintShown = false;
+
+        this._spawnKavi();
+
+        TRIAL_FIRES.forEach((data, idx) => {
+            const fire = this.add.container(W * data.x, H - 92);
+            const glow = this.add.circle(0, -8, 26, 0xfb8500, 0.16);
+            glow.setBlendMode(Phaser.BlendModes.ADD);
+            const core = this.add.graphics();
+            core.fillStyle(0xfb8500, 0.9);
+            core.fillTriangle(-9, 0, 9, 0, 0, -32);
+            core.fillStyle(0xfadb5f, 0.9);
+            core.fillTriangle(-5, 0, 5, 0, 0, -21);
+            const embers = this.add.circle(0, 3, 12, 0xd4af37, 0.22);
+            embers.setBlendMode(Phaser.BlendModes.ADD);
+
+            if (data.id === "stranger") {
+                const figure = this.add.graphics();
+                figure.fillStyle(0x1c1c22, 0.75);
+                figure.fillRoundedRect(-31, -28, 14, 28, 3);
+                figure.fillCircle(-24, -35, 6);
+                fire.add(figure);
+            }
+            if (data.id === "self") {
+                const pool = this.add.graphics();
+                pool.fillStyle(0x10172a, 0.65);
+                pool.fillEllipse(0, 18, 58, 14);
+                pool.lineStyle(1, 0xfadb5f, 0.2);
+                pool.strokeEllipse(0, 18, 58, 14);
+                fire.add(pool);
+            }
+
+            this.tweens.add({
+                targets: glow,
+                scale: { from: 0.75, to: 1.25 },
+                alpha: { from: 0.12, to: 0.28 },
+                duration: 1200 + idx * 180,
+                yoyo: true,
+                repeat: -1,
+                ease: "sine.inOut",
+            });
+
+            fire.add([glow, embers, core]);
+            fire.kind = "trial-fire";
+            fire.fireId = data.id;
+            fire.completed = false;
+            fire.glow = glow;
+            fire.core = core;
+            this._attachMirrorLabels(
+                fire,
+                data.surfaceLabel,
+                data.hiddenLabel,
+                -54
+            );
+            this.worldLayer.add(fire);
+            this.trialFires.push(fire);
+        });
+
+        const central = this.add.container(W * 0.91, H - 92);
+        const halo = this.add.circle(0, -18, 38, 0xfadb5f, 0.04);
+        halo.setBlendMode(Phaser.BlendModes.ADD);
+        const flame = this.add.graphics();
+        flame.fillStyle(0xfb8500, 0.35);
+        flame.fillTriangle(-16, 0, 16, 0, 0, -48);
+        flame.fillStyle(0xfadb5f, 0.25);
+        flame.fillTriangle(-9, 0, 9, 0, 0, -34);
+        central.add([halo, flame]);
+        central.kind = "central-flame";
+        central.setAlpha(0.35);
+        central.halo = halo;
+        this._attachMirrorLabels(
+            central,
+            "Central flame",
+            "Tenderness becomes passage",
+            -66
+        );
+        this.worldLayer.add(central);
+        this.centralFlame = central;
+
+        this._showNarration(
+            "The road between worlds is lit by small fires. Each one asks a question. Each question is a door."
+        );
+        this._afterDialogue = () => {
+            gameEvents.emit("script:start", { name: "trial-opening" });
+            this._afterDialogue = () => {
+                this._emitChapter8Progress();
+                gameEvents.emit(
+                    "hud:hint",
+                    "Face each fire. Use Mirror to read its hidden truth, then press Space."
+                );
+            };
+        };
+        this._emitChapter8Progress();
+    }
+
     _spawnKavi() {
         if (this.kaviSpawned) return;
         this.kaviSpawned = true;
@@ -968,11 +1089,13 @@ export default class ChapterScene extends Phaser.Scene {
             ...(this.trailPulses || []),
             ...(this.thresholdAnchors || []).filter((a) => !a.collected),
             ...(this.memoryShards || []).filter((s) => !s.collected),
+            ...(this.trialFires || []).filter((f) => !f.completed),
             this.tara,
             this.mural,
             this.shadowTwin,
             this.secondGate,
             this.kavi,
+            this.centralFlame,
         ].filter(Boolean);
 
         targets.forEach((t) => {
@@ -1074,6 +1197,23 @@ export default class ChapterScene extends Phaser.Scene {
                         })
                     );
             }
+        } else if (this.chapterId === 8) {
+            (this.trialFires || [])
+                .filter((f) => !f.completed)
+                .forEach((f) =>
+                    candidates.push({
+                        target: f,
+                        range: 64,
+                        label: "Face fire",
+                    })
+                );
+            if (this.centralFlameOpen && this.centralFlame) {
+                candidates.push({
+                    target: this.centralFlame,
+                    range: 58,
+                    label: "Enter flame",
+                });
+            }
         }
 
         let nearest = null;
@@ -1151,6 +1291,14 @@ export default class ChapterScene extends Phaser.Scene {
             } else if (this.helperPhase === "shards") {
                 gameEvents.emit("hud:hint", "Find a golden memory shard and press Space while Mirror is on.");
             }
+        } else if (this.chapterId === 8) {
+            const completed = this.trialFires?.filter((f) => f.completed).length || 0;
+            gameEvents.emit(
+                "hud:hint",
+                completed < 3
+                    ? "Stand beside an unanswered fire and press Space. Mirror reveals what it is really asking."
+                    : "The central flame is awake. Walk into it."
+            );
         }
     }
 
@@ -1234,6 +1382,25 @@ export default class ChapterScene extends Phaser.Scene {
                         return;
                     }
                 }
+            }
+            this._showNoTargetHint();
+        } else if (this.chapterId === 8) {
+            for (const fire of this.trialFires || []) {
+                if (Math.abs(fire.x - this.hero.x) < 64 && !fire.completed) {
+                    gameEvents.emit("script:start", {
+                        name: "trial-fire",
+                        fireId: fire.fireId,
+                    });
+                    return;
+                }
+            }
+            if (
+                this.centralFlameOpen &&
+                this.centralFlame &&
+                Math.abs(this.centralFlame.x - this.hero.x) < 58
+            ) {
+                this._completeChapter();
+                return;
             }
             this._showNoTargetHint();
         }
@@ -1379,6 +1546,77 @@ export default class ChapterScene extends Phaser.Scene {
         }
     }
 
+    _handleTrialFireChoice(payload) {
+        const fire = this.trialFires?.find((f) => f.fireId === payload.fireId);
+        if (!fire) return;
+        if (!payload.accepted) {
+            this.tweens.add({
+                targets: fire,
+                scale: { from: 1, to: 0.94 },
+                alpha: { from: 1, to: 0.72 },
+                duration: 160,
+                yoyo: true,
+                ease: "sine.inOut",
+            });
+            return;
+        }
+        this._completeTrialFire(fire);
+    }
+
+    _completeTrialFire(fire) {
+        if (!fire || fire.completed) return;
+        fire.completed = true;
+        if (fire.glow) {
+            this.tweens.add({
+                targets: fire.glow,
+                alpha: { from: 0.28, to: 0.62 },
+                scale: { from: 1.1, to: 1.8 },
+                duration: 650,
+                yoyo: true,
+                repeat: 1,
+                ease: "sine.inOut",
+            });
+        }
+        this.tweens.add({
+            targets: fire,
+            y: fire.y - 6,
+            duration: 360,
+            yoyo: true,
+            ease: "sine.inOut",
+        });
+        gameEvents.emit("fx:flicker");
+        this._emitChapter8Progress();
+
+        const allComplete = this.trialFires.every((f) => f.completed);
+        if (allComplete && !this.centralFlameOpen) {
+            this.centralFlameOpen = true;
+            if (this.centralFlame) {
+                this.tweens.add({
+                    targets: this.centralFlame,
+                    alpha: 1,
+                    duration: 700,
+                    ease: "sine.out",
+                });
+                if (this.centralFlame.halo) {
+                    this.tweens.add({
+                        targets: this.centralFlame.halo,
+                        alpha: { from: 0.18, to: 0.55 },
+                        scale: { from: 0.8, to: 1.8 },
+                        duration: 1100,
+                        yoyo: true,
+                        repeat: -1,
+                        ease: "sine.inOut",
+                    });
+                }
+            }
+            gameEvents.emit(
+                "hud:hint",
+                "All three fires answer. Walk into the central flame."
+            );
+            this._emitChapter8Progress();
+        }
+    }
+
     _checkChapter1Progress() {
         const allSpoken = this.citizens.every((c) => c.spoken);
         const allPulses = this.pulses.every((p) => p.collected);
@@ -1403,6 +1641,7 @@ export default class ChapterScene extends Phaser.Scene {
         this.completed = true;
         if (this.chapterId === 2) this._emitChapter2Progress();
         if (this.chapterId === 7) this._emitChapter7Progress();
+        if (this.chapterId === 8) this._emitChapter8Progress();
         gameEvents.emit("chapter:complete", { chapterId: this.chapterId });
     }
 
@@ -1530,6 +1769,29 @@ export default class ChapterScene extends Phaser.Scene {
                     : this.helperPhase === "shards"
                       ? "Memory shards"
                       : "Mirror lesson",
+        });
+    }
+
+    _emitChapter8Progress() {
+        if (!this.trialFires) return;
+        const completed = this.trialFires.filter((f) => f.completed).length;
+        const atFlame =
+            this.centralFlameOpen && this.centralFlame
+                ? Math.abs(this.centralFlame.x - this.hero.x) < 58
+                : false;
+        gameEvents.emit("chapter:progress", {
+            objective:
+                completed < 3
+                    ? "Face the three fires with tenderness."
+                    : "Enter the central flame.",
+            detail:
+                completed < 3
+                    ? "Use Mirror to see what each fire hides, then choose the compassionate response."
+                    : "The fires have answered together. Walk into the central flame.",
+            label: "fires",
+            current: completed + (atFlame ? 1 : 0),
+            total: 4,
+            phase: this.centralFlameOpen ? "Central flame" : "Road of Trials",
         });
     }
 
@@ -1676,6 +1938,18 @@ export default class ChapterScene extends Phaser.Scene {
             if (!this.completed) this._emitChapter6Progress();
         }
 
+        // Chapter 8: answer fires, then step into the central flame
+        if (this.chapterId === 8 && canMove) {
+            if (
+                this.centralFlameOpen &&
+                this.centralFlame &&
+                Math.abs(this.centralFlame.x - this.hero.x) < 44
+            ) {
+                this._completeChapter();
+            }
+            if (!this.completed) this._emitChapter8Progress();
+        }
+
         // Clamp hero position
         this.hero.x = Phaser.Math.Clamp(this.hero.x + vx, 30, W - 30);
         this.hero.y = Phaser.Math.Clamp(
@@ -1714,6 +1988,7 @@ export default class ChapterScene extends Phaser.Scene {
         if (this.chapterId === 5) intensity = 0.07;
         if (this.chapterId === 6) intensity = 0.04;
         if (this.chapterId === 7) intensity = 0.035;
+        if (this.chapterId === 8) intensity = 0.045;
         if (this.chapterId === 3) intensity = 0.03;
         for (let i = 0; i < bands; i++) {
             const y = 80 + i * 65 + Math.sin((this._fogOffset + i * 20) * 0.05) * 6;

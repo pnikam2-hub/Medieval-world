@@ -94,7 +94,20 @@ export const CHAPTERS = [
             "What truth have you been holding the lens away from, and what might soften if you held it steady?",
         helperLine: "Hold the Mirror steady. Do not glance. See. - Tara",
     },
-    { id: 8, title: "Road of Trials", subtitle: "Small fires, larger truths", unlocked: false, kind: "locked" },
+    {
+        id: 8,
+        title: "Road of Trials",
+        subtitle: "Small fires, larger truths",
+        unlocked: true,
+        kind: "trials",
+        narration:
+            "The road between worlds is lit by small fires. Each one asks a question. Each question is a door.",
+        endText:
+            "You are not tested by what you can do. You are revealed by what you choose to notice.",
+        journalQuestion:
+            "What small fire have you been walking past, and what would happen if you stopped and sat beside it?",
+        helperLine: "You sat down. Just... sat. That was brave. - Kavi",
+    },
     { id: 9, title: "Night Sea Journey", subtitle: "Rhythmic grief", unlocked: false, kind: "locked" },
     { id: 10, title: "Adventure", subtitle: "Helpers along the river", unlocked: false, kind: "locked" },
     { id: 11, title: "Initiation", subtitle: "Naming the unspoken", unlocked: false, kind: "locked" },
@@ -257,4 +270,141 @@ export const TARA_LENS_CLOSING = [
     },
     { speaker: "Kavi", text: "Thank you. For not looking away." },
     { speaker: "You", text: "I could not. Not anymore." },
+];
+
+export const TRIAL_FIRES = [
+    {
+        id: "stranger",
+        surfaceLabel: "Just resting",
+        hiddenLabel: "Carrying something too heavy to name",
+        x: 0.28,
+        prompt: "The first fire asks what you do when someone suffers quietly.",
+        choices: [
+            {
+                id: "walk-on",
+                tag: "Avoidance",
+                text: "Keep walking. Everyone carries something.",
+                outcome:
+                    "The fire gutters low. Kavi dims. The stranger does not accuse you; the road simply waits.",
+                outcomeSpeaker: null,
+                kind: "narration",
+                lantern: -0.02,
+                advance: false,
+                retryText: "The fire waits. Choose again from the tender place.",
+                event: {
+                    name: "trial-fire:choice",
+                    payload: { fireId: "stranger", accepted: false },
+                },
+            },
+            {
+                id: "sit-beside",
+                tag: "Compassion",
+                text: "Sit beside them. Not to fix - just to be there.",
+                outcome:
+                    "The stranger softens. A quiet voice says, 'No one has done that before.'",
+                outcomeSpeaker: null,
+                kind: "narration",
+                lantern: 0.08,
+                advance: true,
+                event: {
+                    name: "trial-fire:choice",
+                    payload: { fireId: "stranger", accepted: true },
+                },
+            },
+        ],
+        afterLine: "You sat down. Just... sat. That was brave.",
+    },
+    {
+        id: "promise",
+        surfaceLabel: "Just an old campfire",
+        hiddenLabel: "A promise someone made and forgot",
+        x: 0.52,
+        prompt: "The second fire asks what forgotten promises deserve.",
+        choices: [
+            {
+                id: "not-mine",
+                tag: "Avoidance",
+                text: "Not my fire. Not my problem.",
+                outcome:
+                    "A cold wind crosses the road. The embers fold in on themselves, waiting.",
+                outcomeSpeaker: null,
+                kind: "narration",
+                lantern: -0.02,
+                advance: false,
+                retryText: "The abandoned flame waits for a kinder answer.",
+                event: {
+                    name: "trial-fire:choice",
+                    payload: { fireId: "promise", accepted: false },
+                },
+            },
+            {
+                id: "add-branch",
+                tag: "Compassion",
+                text: "Add a small branch. Even forgotten promises deserve warmth.",
+                outcome:
+                    "The flame revives. A whisper rises with the sparks: 'Remembered.'",
+                outcomeSpeaker: null,
+                kind: "narration",
+                lantern: 0.06,
+                advance: true,
+                event: {
+                    name: "trial-fire:choice",
+                    payload: { fireId: "promise", accepted: true },
+                },
+            },
+        ],
+        afterLine:
+            "A forgotten promise. And you remembered it. I am... a little brighter, I think.",
+    },
+    {
+        id: "self",
+        surfaceLabel: "Just my reflection",
+        hiddenLabel: "Someone who is still learning to stay",
+        x: 0.76,
+        prompt: "The third fire asks how you speak to yourself.",
+        choices: [
+            {
+                id: "not-enough",
+                tag: "Control",
+                text: "Not enough. Still not enough.",
+                outcome:
+                    "The pool ripples hard. Your reflection blurs, not gone, but difficult to hold.",
+                outcomeSpeaker: null,
+                kind: "narration",
+                lantern: -0.03,
+                advance: false,
+                retryText: "The reflection steadies and asks for a gentler truth.",
+                event: {
+                    name: "trial-fire:choice",
+                    payload: { fireId: "self", accepted: false },
+                },
+            },
+            {
+                id: "you-are-trying",
+                tag: "Compassion",
+                text: "You are trying. That is already more than before.",
+                outcome:
+                    "The pool stills. A faint golden light rises from beneath the reflection.",
+                outcomeSpeaker: null,
+                kind: "narration",
+                lantern: 0.1,
+                advance: true,
+                event: {
+                    name: "trial-fire:choice",
+                    payload: { fireId: "self", accepted: true },
+                },
+            },
+        ],
+        afterLine:
+            "You said 'you are trying' to yourself. I am going to borrow it.",
+    },
+];
+
+export const TRIAL_OPENING_DIALOGUE = [
+    { speaker: "Kavi", text: "Three fires. That seems... manageable?" },
+    { speaker: "You", text: "Somehow I doubt 'manageable' is the point." },
+    {
+        speaker: "Kavi",
+        text: "No. The point is probably something annoyingly deep.",
+    },
 ];

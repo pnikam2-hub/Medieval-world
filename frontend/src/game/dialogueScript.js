@@ -6,6 +6,8 @@ import {
     TARA_DIALOGUE,
     TARA_LENS_CLOSING,
     TARA_LENS_DIALOGUE,
+    TRIAL_FIRES,
+    TRIAL_OPENING_DIALOGUE,
 } from "@/game/chapters";
 
 // Speaker name -> hidden emotional truth revealed under Mirror Lens
@@ -72,6 +74,38 @@ export function buildScript(payload) {
     }
     if (payload.name === "tara-lens-closing") {
         return TARA_LENS_CLOSING.map(withSpeakerLabel);
+    }
+    if (payload.name === "trial-opening") {
+        return TRIAL_OPENING_DIALOGUE.map(withSpeakerLabel);
+    }
+    if (payload.name === "trial-fire") {
+        const fire = TRIAL_FIRES.find((x) => x.id === payload.fireId);
+        if (!fire) return null;
+        return [
+            {
+                speaker: null,
+                text: fire.prompt,
+                kind: "narration",
+                choice: {
+                    prompt: "Answer the fire with the kind of hero you are becoming.",
+                    options: fire.choices.map((option) =>
+                        option.advance
+                            ? {
+                                  ...option,
+                                  afterLines: [
+                                      {
+                                          speaker: "Kavi",
+                                          hiddenLabel:
+                                              SPEAKER_HIDDEN_LABELS.Kavi,
+                                          text: fire.afterLine,
+                                      },
+                                  ],
+                              }
+                            : option
+                    ),
+                },
+            },
+        ];
     }
     if (payload.name === "shadow-dialogue") {
         return [
