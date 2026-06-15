@@ -108,7 +108,20 @@ export const CHAPTERS = [
             "What small fire have you been walking past, and what would happen if you stopped and sat beside it?",
         helperLine: "You sat down. Just... sat. That was brave. - Kavi",
     },
-    { id: 9, title: "Night Sea Journey", subtitle: "Rhythmic grief", unlocked: false, kind: "locked" },
+    {
+        id: 9,
+        title: "Night Sea Journey",
+        subtitle: "Rhythmic grief",
+        unlocked: true,
+        kind: "night-sea",
+        narration:
+            "There is a sea that does not drown. It carries every tear ever shed, every goodbye never spoken, every silence that followed loss.",
+        endText:
+            "Grief is not a sea you cross once. It is a tide you learn to breathe with.",
+        journalQuestion:
+            "What grief, yours or someone else's, have you been holding your breath against?",
+        helperLine: "It changes shape. That is not the same as leaving. But it becomes breathable. - Kavi",
+    },
     { id: 10, title: "Adventure", subtitle: "Helpers along the river", unlocked: false, kind: "locked" },
     { id: 11, title: "Initiation", subtitle: "Naming the unspoken", unlocked: false, kind: "locked" },
     { id: 12, title: "Threshold Crossing", subtitle: "The inward turn", unlocked: false, kind: "locked" },
@@ -406,5 +419,82 @@ export const TRIAL_OPENING_DIALOGUE = [
     {
         speaker: "Kavi",
         text: "No. The point is probably something annoyingly deep.",
+    },
+];
+
+export const MEMORY_BUOYS = [
+    {
+        id: "toy",
+        color: 0xffb3c6,
+        x: 0.2,
+        surfaceLabel: "A child's lost toy",
+        hiddenLabel: "Left behind when we fled. Still dreamed.",
+        memory:
+            "I left it behind when we fled. I still look for it in dreams.",
+    },
+    {
+        id: "letter",
+        color: 0x7fd9c4,
+        x: 0.36,
+        surfaceLabel: "A letter never sent",
+        hiddenLabel: "Seven drafts. All true. None brave enough.",
+        memory:
+            "I wrote it seven times. Each version was true. None was sent.",
+    },
+    {
+        id: "name",
+        color: 0xb9a7ff,
+        x: 0.52,
+        surfaceLabel: "A name no one says",
+        hiddenLabel: "Silence grew larger than love.",
+        memory:
+            "We stopped speaking her name. The silence grew larger than the love.",
+    },
+    {
+        id: "door",
+        color: 0xc7beb4,
+        x: 0.68,
+        surfaceLabel: "A door that stayed closed",
+        hiddenLabel: "Knocked once. Never again.",
+        memory:
+            "I knocked once. Then I told myself they did not hear. I never knocked again.",
+    },
+    {
+        id: "song",
+        color: 0xfadb5f,
+        x: 0.84,
+        surfaceLabel: "A song half-remembered",
+        hiddenLabel: "Mother's lullaby. Last verse lost.",
+        memory:
+            "My mother sang it. I cannot find the last verse. I have been searching for years.",
+    },
+];
+
+export const SEA_OPENING_LINES = [
+    { speaker: null, kind: "narration", text: "Breathe." },
+    { speaker: null, kind: "narration", text: "Slower." },
+    {
+        speaker: null,
+        kind: "narration",
+        text: "The grief here is not yours. But it knows you.",
+    },
+    {
+        speaker: null,
+        kind: "narration",
+        text: "Listen. Do not fix. Just listen.",
+    },
+];
+
+export const SEA_CLOSING_DIALOGUE = [
+    { speaker: "Kavi", text: "I was listening too. Every single one." },
+    { speaker: "You", text: "They were not mine. But they felt like mine." },
+    {
+        speaker: "Kavi",
+        text: "That is what grief does. It does not ask whose it is. It just arrives.",
+    },
+    { speaker: "You", text: "And it leaves?" },
+    {
+        speaker: "Kavi",
+        text: "It changes shape. That is not the same as leaving. But it becomes breathable.",
     },
 ];

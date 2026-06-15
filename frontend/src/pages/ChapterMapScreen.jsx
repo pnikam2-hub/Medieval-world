@@ -40,7 +40,7 @@ export default function ChapterMapScreen() {
                         The Hero Journey
                     </h1>
                     <p className="text-neutral-500 text-xs md:text-sm mt-1">
-                        Twenty-three stages. Eight open. Fifteen
+                        Twenty-three stages. Nine open. Fourteen
                         waiting.
                     </p>
                 </div>

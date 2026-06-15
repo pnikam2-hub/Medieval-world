@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { gameEvents } from "./events";
-import { TRIAL_FIRES } from "./chapters";
+import { MEMORY_BUOYS, TRIAL_FIRES } from "./chapters";
 
 const W = 960;
 const H = 540;
@@ -53,6 +53,7 @@ export default class ChapterScene extends Phaser.Scene {
         else if (chapterId === 6) this._setupChapter6();
         else if (chapterId === 7) this._setupChapter7();
         else if (chapterId === 8) this._setupChapter8();
+        else if (chapterId === 9) this._setupChapter9();
 
         // Mirror lens toggle from React
         this._onMirror = (active) => {
@@ -189,6 +190,37 @@ export default class ChapterScene extends Phaser.Scene {
             dark.fillStyle(0x05050a, 1);
             dark.fillRect(0, 0, W, H);
             this.bgLayer.add(dark);
+        }
+
+        if ([9].includes(this.chapterId)) {
+            const sea = this.add.graphics();
+            sea.fillGradientStyle(0x030714, 0x04091d, 0x071327, 0x02040a, 1);
+            sea.fillRect(0, 0, W, H);
+            sea.fillStyle(0x10244a, 0.5);
+            sea.fillRect(0, H - 190, W, 130);
+            sea.fillStyle(0x0d1833, 0.85);
+            sea.fillRect(0, H - 110, W, 70);
+            this.bgLayer.add(sea);
+
+            for (let i = 0; i < 42; i++) {
+                const star = this.add.circle(
+                    30 + Math.random() * (W - 60),
+                    34 + Math.random() * (H - 260),
+                    0.8 + Math.random() * 1.4,
+                    0xdbeafe,
+                    0.25 + Math.random() * 0.6
+                );
+                star.setBlendMode(Phaser.BlendModes.ADD);
+                this.tweens.add({
+                    targets: star,
+                    alpha: { from: star.alpha, to: Math.min(1, star.alpha + 0.35) },
+                    duration: 1200 + Math.random() * 2200,
+                    yoyo: true,
+                    repeat: -1,
+                    ease: "sine.inOut",
+                });
+                this.bgLayer.add(star);
+            }
         }
 
         if ([6].includes(this.chapterId)) {
@@ -967,6 +999,106 @@ export default class ChapterScene extends Phaser.Scene {
         this._emitChapter8Progress();
     }
 
+    // ------------------------------------------------------------------
+    // Chapter 9: Night Sea Journey - breathe with grief and listen
+    // ------------------------------------------------------------------
+    _setupChapter9() {
+        this.memoryBuoys = [];
+        this.breathT = 0;
+        this.breathPeriod = 4;
+        this.stillnessPoints = 0;
+        this.lastStillnessExhale = -1;
+        this.shoreOpen = false;
+        this.shoreDialogueStarted = false;
+        this.seaMidlineSpoken = false;
+
+        this._spawnKavi();
+        this.kavi.setAlpha(0.28);
+
+        MEMORY_BUOYS.forEach((data, idx) => {
+            const buoy = this.add.container(W * data.x, H - 132 + (idx % 2) * 18);
+            const halo = this.add.circle(0, 0, 24, data.color, 0.16);
+            halo.setBlendMode(Phaser.BlendModes.ADD);
+            const core = this.add.circle(0, 0, 7, data.color, 0.88);
+            core.setBlendMode(Phaser.BlendModes.ADD);
+            const reflection = this.add.ellipse(0, 34, 24, 6, data.color, 0.18);
+            reflection.setBlendMode(Phaser.BlendModes.ADD);
+            this.tweens.add({
+                targets: buoy,
+                y: buoy.y - 8,
+                duration: 1500 + idx * 160,
+                yoyo: true,
+                repeat: -1,
+                ease: "sine.inOut",
+            });
+            this.tweens.add({
+                targets: halo,
+                scale: { from: 0.75, to: 1.35 },
+                alpha: { from: 0.12, to: 0.28 },
+                duration: 1300 + idx * 120,
+                yoyo: true,
+                repeat: -1,
+                ease: "sine.inOut",
+            });
+            buoy.add([reflection, halo, core]);
+            buoy.kind = "memory-buoy";
+            buoy.buoyId = data.id;
+            buoy.heard = false;
+            buoy.color = data.color;
+            this._attachMirrorLabels(
+                buoy,
+                data.surfaceLabel,
+                data.hiddenLabel,
+                -42
+            );
+            this.worldLayer.add(buoy);
+            this.memoryBuoys.push(buoy);
+        });
+
+        const shore = this.add.container(W - 44, H - 108);
+        const sand = this.add.graphics();
+        sand.fillStyle(0xfadb5f, 0.16);
+        sand.fillEllipse(0, 18, 94, 42);
+        sand.fillStyle(0xfef3c7, 0.12);
+        sand.fillEllipse(10, 6, 64, 22);
+        const glow = this.add.circle(0, 0, 44, 0xfadb5f, 0.04);
+        glow.setBlendMode(Phaser.BlendModes.ADD);
+        shore.add([glow, sand]);
+        shore.setAlpha(0.18);
+        shore.kind = "far-shore";
+        shore.glow = glow;
+        this._attachMirrorLabels(shore, "Far shore", "Breathable grief", -42);
+        this.worldLayer.add(shore);
+        this.farShore = shore;
+
+        this.breathRing = this.add.graphics();
+        this.breathRing.setDepth(25);
+        this.breathText = this.add.text(W / 2, H - 40, "inhale", {
+            fontFamily: "Outfit, sans-serif",
+            fontSize: "10px",
+            color: "#fadb5f",
+            align: "center",
+        });
+        this.breathText.setOrigin(0.5);
+        this.breathText.setDepth(26);
+        this.foreLayer.add([this.breathRing, this.breathText]);
+
+        this._showNarration(
+            "There is a sea that does not drown. You must cross it not by swimming, but by breathing."
+        );
+        this._afterDialogue = () => {
+            gameEvents.emit("script:start", { name: "sea-opening" });
+            this._afterDialogue = () => {
+                this._emitChapter9Progress();
+                gameEvents.emit(
+                    "hud:hint",
+                    "Cross the night sea. Listen to buoys with Mirror, and pause during exhale."
+                );
+            };
+        };
+        this._emitChapter9Progress();
+    }
+
     _spawnKavi() {
         if (this.kaviSpawned) return;
         this.kaviSpawned = true;
@@ -1090,12 +1222,14 @@ export default class ChapterScene extends Phaser.Scene {
             ...(this.thresholdAnchors || []).filter((a) => !a.collected),
             ...(this.memoryShards || []).filter((s) => !s.collected),
             ...(this.trialFires || []).filter((f) => !f.completed),
+            ...(this.memoryBuoys || []).filter((b) => !b.heard),
             this.tara,
             this.mural,
             this.shadowTwin,
             this.secondGate,
             this.kavi,
             this.centralFlame,
+            this.farShore,
         ].filter(Boolean);
 
         targets.forEach((t) => {
@@ -1214,6 +1348,23 @@ export default class ChapterScene extends Phaser.Scene {
                     label: "Enter flame",
                 });
             }
+        } else if (this.chapterId === 9) {
+            (this.memoryBuoys || [])
+                .filter((b) => !b.heard)
+                .forEach((b) =>
+                    candidates.push({
+                        target: b,
+                        range: 58,
+                        label: "Listen",
+                    })
+                );
+            if (this.shoreOpen && this.farShore) {
+                candidates.push({
+                    target: this.farShore,
+                    range: 62,
+                    label: "Reach shore",
+                });
+            }
         }
 
         let nearest = null;
@@ -1298,6 +1449,16 @@ export default class ChapterScene extends Phaser.Scene {
                 completed < 3
                     ? "Stand beside an unanswered fire and press Space. Mirror reveals what it is really asking."
                     : "The central flame is awake. Walk into it."
+            );
+        } else if (this.chapterId === 9) {
+            const heard = this.memoryBuoys?.filter((b) => b.heard).length || 0;
+            gameEvents.emit(
+                "hud:hint",
+                this.shoreOpen
+                    ? "The far shore is visible. Walk right into the pale light."
+                    : heard < 3
+                      ? "Use Mirror near memory buoys, then press Space to listen."
+                      : "Pause during exhale. Stillness accumulates; the sea notices."
             );
         }
     }
@@ -1400,6 +1561,33 @@ export default class ChapterScene extends Phaser.Scene {
                 Math.abs(this.centralFlame.x - this.hero.x) < 58
             ) {
                 this._completeChapter();
+                return;
+            }
+            this._showNoTargetHint();
+        } else if (this.chapterId === 9) {
+            for (const buoy of this.memoryBuoys || []) {
+                if (Math.abs(buoy.x - this.hero.x) < 58 && !buoy.heard) {
+                    if (!this.mirrorActive) {
+                        gameEvents.emit(
+                            "hud:hint",
+                            "Turn Mirror on beside the buoy, then press Space to listen."
+                        );
+                        return;
+                    }
+                    gameEvents.emit("script:start", {
+                        name: "memory-buoy",
+                        buoyId: buoy.buoyId,
+                    });
+                    this._afterDialogue = () => this._collectMemoryBuoy(buoy);
+                    return;
+                }
+            }
+            if (
+                this.shoreOpen &&
+                this.farShore &&
+                Math.abs(this.farShore.x - this.hero.x) < 62
+            ) {
+                this._startSeaClosing();
                 return;
             }
             this._showNoTargetHint();
@@ -1617,6 +1805,85 @@ export default class ChapterScene extends Phaser.Scene {
         }
     }
 
+    _collectMemoryBuoy(buoy) {
+        if (!buoy || buoy.heard) return;
+        buoy.heard = true;
+        gameEvents.emit("lantern:adjust", 0.05);
+        gameEvents.emit("fx:flicker");
+
+        const mote = this.add.circle(buoy.x, buoy.y, 5, buoy.color || 0xfadb5f, 0.95);
+        mote.setBlendMode(Phaser.BlendModes.ADD);
+        this.fxLayer.add(mote);
+        this.tweens.add({
+            targets: mote,
+            x: this.hero.x,
+            y: this.hero.y - 22,
+            scale: 0.2,
+            alpha: 0,
+            duration: 900,
+            ease: "sine.inOut",
+            onComplete: () => mote.destroy(),
+        });
+        this.tweens.add({
+            targets: buoy,
+            alpha: 0.28,
+            scale: 0.7,
+            duration: 700,
+            ease: "sine.out",
+        });
+
+        const heard = this.memoryBuoys.filter((b) => b.heard).length;
+        if (heard === 3 && !this.seaMidlineSpoken) {
+            this.seaMidlineSpoken = true;
+            gameEvents.emit("dialogue:open", {
+                speaker: null,
+                kind: "narration",
+                text: "You are doing well. Stillness is not weakness here.",
+            });
+        }
+        this._checkNightSeaReadiness();
+        this._emitChapter9Progress();
+    }
+
+    _checkNightSeaReadiness() {
+        if (!this.memoryBuoys) return;
+        const heard = this.memoryBuoys.filter((b) => b.heard).length;
+        if (heard >= 3 && this.stillnessPoints >= 5 && !this.shoreOpen) {
+            this.shoreOpen = true;
+            if (this.farShore) {
+                this.tweens.add({
+                    targets: this.farShore,
+                    alpha: 1,
+                    duration: 900,
+                    ease: "sine.out",
+                });
+                if (this.farShore.glow) {
+                    this.tweens.add({
+                        targets: this.farShore.glow,
+                        alpha: { from: 0.12, to: 0.5 },
+                        scale: { from: 0.8, to: 1.8 },
+                        duration: 1300,
+                        yoyo: true,
+                        repeat: -1,
+                        ease: "sine.inOut",
+                    });
+                }
+            }
+            gameEvents.emit(
+                "hud:hint",
+                "The far shore appears. Walk right into the pale light."
+            );
+        }
+    }
+
+    _startSeaClosing() {
+        if (this.shoreDialogueStarted || this.completed) return;
+        this.shoreDialogueStarted = true;
+        if (this.kavi) this.kavi.setAlpha(1);
+        this._afterDialogue = () => this._completeChapter();
+        gameEvents.emit("script:start", { name: "sea-closing" });
+    }
+
     _checkChapter1Progress() {
         const allSpoken = this.citizens.every((c) => c.spoken);
         const allPulses = this.pulses.every((p) => p.collected);
@@ -1642,6 +1909,7 @@ export default class ChapterScene extends Phaser.Scene {
         if (this.chapterId === 2) this._emitChapter2Progress();
         if (this.chapterId === 7) this._emitChapter7Progress();
         if (this.chapterId === 8) this._emitChapter8Progress();
+        if (this.chapterId === 9) this._emitChapter9Progress();
         gameEvents.emit("chapter:complete", { chapterId: this.chapterId });
     }
 
@@ -1795,6 +2063,74 @@ export default class ChapterScene extends Phaser.Scene {
         });
     }
 
+    _emitChapter9Progress() {
+        if (!this.memoryBuoys) return;
+        const heard = this.memoryBuoys.filter((b) => b.heard).length;
+        const stillness = Math.min(5, this.stillnessPoints || 0);
+        const shoreReached =
+            this.shoreOpen && this.farShore
+                ? Math.abs(this.farShore.x - this.hero.x) < 62
+                : false;
+        const phase = this._isBreathInhale?.() ? "Inhale - move" : "Exhale - pause";
+        gameEvents.emit("chapter:progress", {
+            objective: this.shoreOpen
+                ? "Step onto the far shore."
+                : "Cross the night sea. Breathe with it.",
+            detail: this.shoreOpen
+                ? "The sea has become breathable. Walk right into the pale shore."
+                : "Hear at least 3 memory buoys and earn 5 stillness points by pausing during exhale.",
+            label: "sea",
+            current: Math.min(10, heard + stillness + (shoreReached ? 2 : 0)),
+            total: 10,
+            phase,
+        });
+    }
+
+    _isBreathInhale() {
+        const period = this.breathPeriod || 4;
+        const phase = ((this.breathT || 0) % period) / period;
+        return phase < 0.5;
+    }
+
+    _updateBreathRing(moving, canMove) {
+        if (!this.breathRing || !this.breathText) return;
+        const period = this.breathPeriod || 4;
+        const phase = ((this.breathT || 0) % period) / period;
+        const inhale = phase < 0.5;
+        const local = inhale ? phase / 0.5 : (phase - 0.5) / 0.5;
+        const radius = inhale ? 14 + local * 19 : 33 - local * 19;
+
+        this.breathRing.clear();
+        this.breathRing.lineStyle(1, inhale ? 0xfadb5f : 0x93c5fd, 0.72);
+        this.breathRing.strokeCircle(W / 2, H - 46, radius);
+        this.breathRing.fillStyle(inhale ? 0xfadb5f : 0x93c5fd, 0.04);
+        this.breathRing.fillCircle(W / 2, H - 46, radius);
+        this.breathText.setText(
+            `${inhale ? "inhale" : "exhale"} · stillness ${Math.min(
+                5,
+                this.stillnessPoints || 0
+            )}/5`
+        );
+
+        if (!inhale && canMove && !moving && !this.completed) {
+            const exhaleIndex = Math.floor((this.breathT || 0) / period);
+            if (
+                exhaleIndex !== this.lastStillnessExhale &&
+                (this.stillnessPoints || 0) < 5
+            ) {
+                this.lastStillnessExhale = exhaleIndex;
+                this.stillnessPoints += 1;
+                gameEvents.emit("lantern:adjust", 0.025);
+                gameEvents.emit(
+                    "hud:hint",
+                    "Stillness accumulates. The sea notices."
+                );
+                this._checkNightSeaReadiness();
+                this._emitChapter9Progress();
+            }
+        }
+    }
+
     // ------------------------------------------------------------------
     // Update loop
     // ------------------------------------------------------------------
@@ -1832,6 +2168,16 @@ export default class ChapterScene extends Phaser.Scene {
                 vx = (vx / mag) * speed * dt;
                 vy = (vy / mag) * speed * dt;
             }
+        }
+
+        if (this.chapterId === 9) {
+            this.breathT += dt;
+            const moving = vx !== 0 || vy !== 0;
+            if (!this._isBreathInhale()) {
+                vx *= 0.48;
+                vy *= 0.48;
+            }
+            this._updateBreathRing(moving, canMove);
         }
 
         // Chapter 4: fog pulls hero back (left) on top of input
@@ -1950,6 +2296,18 @@ export default class ChapterScene extends Phaser.Scene {
             if (!this.completed) this._emitChapter8Progress();
         }
 
+        // Chapter 9: breathe, listen, then reach the far shore
+        if (this.chapterId === 9 && canMove) {
+            if (
+                this.shoreOpen &&
+                this.farShore &&
+                Math.abs(this.farShore.x - this.hero.x) < 44
+            ) {
+                this._startSeaClosing();
+            }
+            if (!this.completed) this._emitChapter9Progress();
+        }
+
         // Clamp hero position
         this.hero.x = Phaser.Math.Clamp(this.hero.x + vx, 30, W - 30);
         this.hero.y = Phaser.Math.Clamp(
@@ -1989,6 +2347,7 @@ export default class ChapterScene extends Phaser.Scene {
         if (this.chapterId === 6) intensity = 0.04;
         if (this.chapterId === 7) intensity = 0.035;
         if (this.chapterId === 8) intensity = 0.045;
+        if (this.chapterId === 9) intensity = 0.055;
         if (this.chapterId === 3) intensity = 0.03;
         for (let i = 0; i < bands; i++) {
             const y = 80 + i * 65 + Math.sin((this._fogOffset + i * 20) * 0.05) * 6;

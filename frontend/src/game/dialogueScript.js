@@ -8,6 +8,9 @@ import {
     TARA_LENS_DIALOGUE,
     TRIAL_FIRES,
     TRIAL_OPENING_DIALOGUE,
+    MEMORY_BUOYS,
+    SEA_CLOSING_DIALOGUE,
+    SEA_OPENING_LINES,
 } from "@/game/chapters";
 
 // Speaker name -> hidden emotional truth revealed under Mirror Lens
@@ -106,6 +109,23 @@ export function buildScript(payload) {
                 },
             },
         ];
+    }
+    if (payload.name === "sea-opening") {
+        return SEA_OPENING_LINES.map(withSpeakerLabel);
+    }
+    if (payload.name === "memory-buoy") {
+        const buoy = MEMORY_BUOYS.find((x) => x.id === payload.buoyId);
+        if (!buoy) return null;
+        return [
+            {
+                speaker: null,
+                kind: "narration",
+                text: `(The buoy remembers) ${buoy.memory}`,
+            },
+        ];
+    }
+    if (payload.name === "sea-closing") {
+        return SEA_CLOSING_DIALOGUE.map(withSpeakerLabel);
     }
     if (payload.name === "shadow-dialogue") {
         return [
