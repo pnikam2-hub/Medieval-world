@@ -1,8 +1,10 @@
 import Phaser from "phaser";
 import { gameEvents } from "./events";
 import {
+    COURAGE_FEAR_OBJECTS,
     INWARD_THRESHOLD_MARKERS,
     INITIATION_STONES,
+    LONG_DARK_ECHOES,
     MEMORY_BUOYS,
     RIVER_HELPERS,
     TRIAL_FIRES,
@@ -64,6 +66,8 @@ export default class ChapterScene extends Phaser.Scene {
         else if (chapterId === 11) this._setupChapter11();
         else if (chapterId === 12) this._setupChapter12();
         else if (chapterId === 13) this._setupChapter13();
+        else if (chapterId === 14) this._setupChapter14();
+        else if (chapterId === 15) this._setupChapter15();
 
         // Mirror lens toggle from React
         this._onMirror = (active) => {
@@ -190,6 +194,31 @@ export default class ChapterScene extends Phaser.Scene {
                 });
                 this.bgLayer.add(dot);
             }
+        }
+
+        if ([14].includes(this.chapterId)) {
+            const dark = this.add.graphics();
+            dark.fillGradientStyle(0x010101, 0x030303, 0x070504, 0x010101, 1);
+            dark.fillRect(0, 0, W, H);
+            dark.fillStyle(0x0b0807, 0.95);
+            dark.fillEllipse(W * 0.5, H - 28, W * 1.24, 120);
+            this.bgLayer.add(dark);
+        }
+
+        if ([15].includes(this.chapterId)) {
+            const chamber = this.add.graphics();
+            chamber.fillGradientStyle(0x070707, 0x0c0907, 0x1a1008, 0x050505, 1);
+            chamber.fillRect(0, 0, W, H);
+            chamber.fillStyle(0xfadb5f, 0.035);
+            chamber.fillEllipse(W / 2, H * 0.56, W * 0.76, H * 0.54);
+            chamber.lineStyle(1, 0xfadb5f, 0.16);
+            for (let i = 0; i < 8; i++) {
+                chamber.beginPath();
+                chamber.moveTo(130 + i * 96, H - 70);
+                chamber.lineTo(170 + i * 82, 74);
+                chamber.strokePath();
+            }
+            this.bgLayer.add(chamber);
         }
 
         if ([8].includes(this.chapterId)) {
@@ -1439,6 +1468,170 @@ export default class ChapterScene extends Phaser.Scene {
         });
     }
 
+    // ------------------------------------------------------------------
+    // Chapter 14: The Long Dark - find five echoes with the lantern
+    // ------------------------------------------------------------------
+    _setupChapter14() {
+        this.longDarkEchoes = [];
+        this.longDarkExitOpen = false;
+        this.longDarkExitStarted = false;
+        this.lastDarkStillHint = 0;
+        this._spawnKavi();
+
+        LONG_DARK_ECHOES.forEach((data, idx) => {
+            const echo = this.add.container(W * data.x, H - 94);
+            const pulse = this.add.circle(0, 0, 20, 0xfadb5f, 0.03);
+            pulse.setBlendMode(Phaser.BlendModes.ADD);
+            const glyph = this.add.graphics();
+            glyph.lineStyle(1, 0xfadb5f, 0.38);
+            glyph.fillStyle(0xfadb5f, 0.06);
+            if (data.shape === "child") {
+                glyph.fillCircle(0, -30, 6);
+                glyph.fillRoundedRect(-7, -24, 14, 24, 4);
+            } else if (data.shape === "door") {
+                glyph.strokeRoundedRect(-14, -38, 28, 38, 4);
+                glyph.fillCircle(8, -18, 2);
+            } else if (data.shape === "handprint") {
+                glyph.fillCircle(0, -16, 6);
+                [-10, -5, 5, 10].forEach((x) => glyph.fillCircle(x, -28, 3));
+            } else if (data.shape === "feather") {
+                glyph.beginPath();
+                glyph.moveTo(-4, 0);
+                glyph.quadraticCurveTo(22, -30, 4, -48);
+                glyph.quadraticCurveTo(-16, -28, -4, 0);
+                glyph.strokePath();
+                glyph.lineBetween(-3, -4, 8, -40);
+            } else {
+                glyph.strokeTriangle(-16, -4, 12, -42, 20, -10);
+                glyph.lineBetween(-6, -16, 12, -26);
+            }
+            echo.add([pulse, glyph]);
+            echo.kind = "long-dark-echo";
+            echo.echoId = data.id;
+            echo.heard = false;
+            echo.pulse = pulse;
+            echo.setAlpha(0.18);
+            echo.deeperText = data.deeperLabel;
+            this._attachMirrorLabels(echo, data.surfaceLabel, data.hiddenLabel, -58);
+            this.tweens.add({
+                targets: pulse,
+                alpha: { from: 0.02, to: 0.26 },
+                scale: { from: 0.65, to: 1.45 },
+                duration: 1600 + idx * 180,
+                yoyo: true,
+                repeat: -1,
+                ease: "sine.inOut",
+            });
+            this.worldLayer.add(echo);
+            this.longDarkEchoes.push(echo);
+        });
+
+        const exit = this.add.container(W * 0.92, H - 96);
+        const glow = this.add.circle(0, -12, 28, 0xfadb5f, 0.04);
+        glow.setBlendMode(Phaser.BlendModes.ADD);
+        const core = this.add.circle(0, -12, 7, 0xfadb5f, 0.36);
+        core.setBlendMode(Phaser.BlendModes.ADD);
+        exit.add([glow, core]);
+        exit.kind = "long-dark-exit";
+        exit.glow = glow;
+        exit.setAlpha(0.22);
+        this.worldLayer.add(exit);
+        this.longDarkExit = exit;
+
+        this._showNarration(
+            "The vastness closes. Not harshly, but gently, like a door that knows you will return."
+        );
+        this._afterDialogue = () => {
+            gameEvents.emit("script:start", { name: "long-dark-opening" });
+            this._afterDialogue = () => {
+                gameEvents.emit("hud:hint", "Find the echoes in the long dark. Stay close to the lantern.");
+                this._emitChapter14Progress();
+            };
+        };
+        this._emitChapter14Progress();
+    }
+
+    // ------------------------------------------------------------------
+    // Chapter 15: Courage - Veer and the three fears
+    // ------------------------------------------------------------------
+    _setupChapter15() {
+        this.courageFears = [];
+        this.courageStarted = false;
+        this.courageClosingStarted = false;
+
+        this._spawnKavi();
+
+        const veer = this.add.container(W * 0.5, H - 104);
+        const aura = this.add.circle(0, -34, 46, 0xfadb5f, 0.08);
+        aura.setBlendMode(Phaser.BlendModes.ADD);
+        const body = this.add.graphics();
+        body.fillStyle(0x151515, 0.98);
+        body.fillRoundedRect(-18, -72, 36, 72, 6);
+        body.fillCircle(0, -84, 12);
+        body.lineStyle(1, 0xfadb5f, 0.45);
+        body.lineBetween(0, -72, 0, -6);
+        body.lineBetween(-12, -45, 12, -45);
+        body.lineBetween(-8, -18, 8, -18);
+        veer.add([aura, body]);
+        veer.kind = "veer";
+        this._attachMirrorLabels(veer, "Stone guardian", "What stays when everything else runs", -102);
+        this.worldLayer.add(veer);
+        this.veer = veer;
+
+        COURAGE_FEAR_OBJECTS.forEach((data, idx) => {
+            const fear = this.add.container(W * data.x, H - 90);
+            const glow = this.add.circle(0, -8, 24, 0xfb8500, 0.1);
+            glow.setBlendMode(Phaser.BlendModes.ADD);
+            const shape = this.add.graphics();
+            shape.lineStyle(1, 0xfadb5f, 0.5);
+            shape.fillStyle(0xfadb5f, 0.08);
+            if (data.shape === "mirror") {
+                shape.strokeRoundedRect(-18, -46, 36, 46, 6);
+                shape.lineBetween(-11, -30, 11, -16);
+            } else if (data.shape === "fist") {
+                shape.fillRoundedRect(-16, -28, 32, 24, 8);
+                shape.lineBetween(-8, -28, -8, -5);
+                shape.lineBetween(0, -28, 0, -5);
+                shape.lineBetween(8, -28, 8, -5);
+            } else {
+                shape.fillCircle(0, -36, 6);
+                shape.fillRoundedRect(-7, -30, 14, 30, 4);
+                shape.lineBetween(-13, -24, -24, -14);
+            }
+            fear.add([glow, shape]);
+            fear.kind = "courage-fear";
+            fear.fearId = data.id;
+            fear.revealed = false;
+            fear.deeperText = data.deeperLabel;
+            fear.glow = glow;
+            this._attachMirrorLabels(fear, data.surfaceLabel, data.hiddenLabel, -62);
+            this.tweens.add({
+                targets: glow,
+                alpha: { from: 0.06, to: 0.3 },
+                scale: { from: 0.8, to: 1.45 },
+                duration: 1500 + idx * 220,
+                yoyo: true,
+                repeat: -1,
+                ease: "sine.inOut",
+            });
+            this.worldLayer.add(fear);
+            this.courageFears.push(fear);
+        });
+
+        this._showNarration(
+            "A stone chamber waits beyond the long dark, veined with amber light and guarded by someone who does not move."
+        );
+        this._afterDialogue = () => {
+            gameEvents.emit("script:start", { name: "courage-opening" });
+            this._afterDialogue = () => {
+                this.courageStarted = true;
+                gameEvents.emit("hud:hint", "Use Mirror beside each fear. Hold it steady, then press Space.");
+                this._emitChapter15Progress();
+            };
+        };
+        this._emitChapter15Progress();
+    }
+
     _spawnKavi() {
         if (this.kaviSpawned) return;
         this.kaviSpawned = true;
@@ -1565,6 +1758,8 @@ export default class ChapterScene extends Phaser.Scene {
             ...(this.memoryBuoys || []).filter((b) => !b.heard),
             ...(this.riverHelpers || []).filter((h) => !h.met),
             ...(this.initiationStones || []).filter((s) => !s.named),
+            ...(this.longDarkEchoes || []).filter((e) => !e.heard),
+            ...(this.courageFears || []).filter((f) => !f.revealed),
             this.tara,
             this.mural,
             this.shadowTwin,
@@ -1574,6 +1769,7 @@ export default class ChapterScene extends Phaser.Scene {
             this.farShore,
             this.riverBridge,
             this.voiceWell,
+            this.veer,
         ].filter(Boolean);
 
         targets.forEach((t) => {
@@ -1743,6 +1939,33 @@ export default class ChapterScene extends Phaser.Scene {
                     label: "Speak vow",
                 });
             }
+        } else if (this.chapterId === 14) {
+            (this.longDarkEchoes || [])
+                .filter((e) => !e.heard)
+                .forEach((e) =>
+                    candidates.push({
+                        target: e,
+                        range: 62,
+                        label: "Hear echo",
+                    })
+                );
+            if (this.longDarkExitOpen && this.longDarkExit) {
+                candidates.push({
+                    target: this.longDarkExit,
+                    range: 64,
+                    label: "Follow light",
+                });
+            }
+        } else if (this.chapterId === 15) {
+            (this.courageFears || [])
+                .filter((f) => !f.revealed)
+                .forEach((f) =>
+                    candidates.push({
+                        target: f,
+                        range: 66,
+                        label: "Look deeper",
+                    })
+                );
         }
 
         let nearest = null;
@@ -2031,6 +2254,38 @@ export default class ChapterScene extends Phaser.Scene {
             ) {
                 this._startInitiationClosing();
                 return;
+            }
+            this._showNoTargetHint();
+        } else if (this.chapterId === 14) {
+            for (const echo of this.longDarkEchoes || []) {
+                if (Math.abs(echo.x - this.hero.x) < 62 && !echo.heard) {
+                    this._hearLongDarkEcho(echo);
+                    return;
+                }
+            }
+            if (
+                this.longDarkExitOpen &&
+                this.longDarkExit &&
+                Math.abs(this.longDarkExit.x - this.hero.x) < 64
+            ) {
+                this._startLongDarkExit();
+                return;
+            }
+            this._showNoTargetHint();
+        } else if (this.chapterId === 15) {
+            if (!this.courageStarted) {
+                this._showNoTargetHint();
+                return;
+            }
+            for (const fear of this.courageFears || []) {
+                if (Math.abs(fear.x - this.hero.x) < 66 && !fear.revealed) {
+                    if (!this.mirrorActive) {
+                        gameEvents.emit("hud:hint", "Turn Mirror on and hold steady beside the fear.");
+                        return;
+                    }
+                    this._revealCourageFear(fear);
+                    return;
+                }
             }
             this._showNoTargetHint();
         }
@@ -2443,6 +2698,100 @@ export default class ChapterScene extends Phaser.Scene {
         gameEvents.emit("script:start", { name: "initiation-closing" });
     }
 
+    _hearLongDarkEcho(echo) {
+        if (!echo || echo.heard) return;
+        echo.heard = true;
+        this._revealDeepTruth(echo, echo.deeperText, -82);
+        gameEvents.emit("lantern:adjust", 0.025);
+        gameEvents.emit("fx:flicker");
+        this.tweens.add({
+            targets: echo,
+            alpha: 0.62,
+            scale: { from: 1, to: 1.08 },
+            duration: 420,
+            yoyo: true,
+            ease: "sine.inOut",
+        });
+        gameEvents.emit("script:start", {
+            name: "long-dark-echo",
+            echoId: echo.echoId,
+        });
+        this._afterDialogue = () => {
+            const heard = this.longDarkEchoes.filter((e) => e.heard).length;
+            if (heard === this.longDarkEchoes.length) this._openLongDarkExit();
+            this._emitChapter14Progress();
+        };
+    }
+
+    _openLongDarkExit() {
+        if (this.longDarkExitOpen) return;
+        this.longDarkExitOpen = true;
+        if (this.longDarkExit) {
+            this.tweens.add({
+                targets: this.longDarkExit,
+                alpha: 1,
+                duration: 800,
+                ease: "sine.out",
+            });
+            if (this.longDarkExit.glow) {
+                this.tweens.add({
+                    targets: this.longDarkExit.glow,
+                    alpha: { from: 0.12, to: 0.55 },
+                    scale: { from: 0.8, to: 1.8 },
+                    duration: 1300,
+                    yoyo: true,
+                    repeat: -1,
+                    ease: "sine.inOut",
+                });
+            }
+        }
+        gameEvents.emit("hud:hint", "A warmer light has appeared at the end of the dark.");
+    }
+
+    _startLongDarkExit() {
+        if (this.longDarkExitStarted || this.completed) return;
+        this.longDarkExitStarted = true;
+        this._afterDialogue = () => this._completeChapter();
+        gameEvents.emit("script:start", { name: "long-dark-exit" });
+    }
+
+    _revealCourageFear(fear) {
+        if (!fear || fear.revealed) return;
+        fear.revealed = true;
+        this._revealDeepTruth(fear, fear.deeperText, -88);
+        gameEvents.emit("lantern:adjust", 0.035);
+        gameEvents.emit("fx:flicker");
+        if (fear.glow) {
+            this.tweens.add({
+                targets: fear.glow,
+                alpha: { from: 0.12, to: 0.5 },
+                scale: { from: 1, to: 1.75 },
+                duration: 700,
+                yoyo: true,
+                ease: "sine.inOut",
+            });
+        }
+        gameEvents.emit("script:start", {
+            name: "courage-fear",
+            fearId: fear.fearId,
+        });
+        this._afterDialogue = () => {
+            const revealed = this.courageFears.filter((f) => f.revealed).length;
+            if (revealed === this.courageFears.length) {
+                this._startCourageClosing();
+            } else {
+                this._emitChapter15Progress();
+            }
+        };
+    }
+
+    _startCourageClosing() {
+        if (this.courageClosingStarted || this.completed) return;
+        this.courageClosingStarted = true;
+        this._afterDialogue = () => this._completeChapter();
+        gameEvents.emit("script:start", { name: "courage-closing" });
+    }
+
     _checkChapter1Progress() {
         const allSpoken = this.citizens.every((c) => c.spoken);
         const allPulses = this.pulses.every((p) => p.collected);
@@ -2472,6 +2821,8 @@ export default class ChapterScene extends Phaser.Scene {
         if (this.chapterId === 10) this._emitChapter10Progress();
         if (this.chapterId === 11) this._emitChapter11Progress();
         if (this.chapterId === 12) this._emitChapter12Progress();
+        if (this.chapterId === 14) this._emitChapter14Progress();
+        if (this.chapterId === 15) this._emitChapter15Progress();
         gameEvents.emit("chapter:complete", { chapterId: this.chapterId });
     }
 
@@ -2709,6 +3060,44 @@ export default class ChapterScene extends Phaser.Scene {
             current: Math.min(10, Math.max(distance, reached * 3)),
             total: 10,
             phase: reached < 3 ? `Marker ${reached}/3` : "Inward gate",
+        });
+    }
+
+    _emitChapter14Progress() {
+        if (!this.longDarkEchoes) return;
+        const heard = this.longDarkEchoes.filter((e) => e.heard).length;
+        const atExit =
+            this.longDarkExitOpen && this.longDarkExit
+                ? Math.abs(this.longDarkExit.x - this.hero.x) < 64
+                : false;
+        gameEvents.emit("chapter:progress", {
+            objective:
+                heard < 5 ? "Find the echoes in the long dark." : "Follow the warmer light.",
+            detail:
+                heard < 5
+                    ? "Walk slowly. Echoes brighten when your lantern is near; press Space to hear them."
+                    : "All five echoes have been heard. The exit light is awake.",
+            label: "echoes",
+            current: heard + (atExit ? 1 : 0),
+            total: 6,
+            phase: this.longDarkExitOpen ? "Exit light" : "Long dark",
+        });
+    }
+
+    _emitChapter15Progress() {
+        if (!this.courageFears) return;
+        const revealed = this.courageFears.filter((f) => f.revealed).length;
+        gameEvents.emit("chapter:progress", {
+            objective:
+                revealed < 3 ? "Face three fears with the deeper Mirror." : "Receive Veer's lesson.",
+            detail:
+                revealed < 3
+                    ? "Turn Mirror on beside a fear object, then press Space to hold the deeper truth."
+                    : "You looked at all three fears and stayed.",
+            label: "fears",
+            current: revealed,
+            total: 3,
+            phase: this.courageClosingStarted ? "Courage" : "Veer's chamber",
         });
     }
 
@@ -2996,6 +3385,38 @@ export default class ChapterScene extends Phaser.Scene {
             if (!this.completed) this._emitChapter12Progress();
         }
 
+        // Chapter 14: the long dark only reveals what the lantern is near
+        if (this.chapterId === 14 && canMove) {
+            const moving = Math.abs(vx) > 0.01 || Math.abs(vy) > 0.01;
+            if (moving) this.lastDarkMoveTime = time;
+            if (!moving && time - (this.lastDarkMoveTime || time) > 8000 && time - (this.lastDarkStillHint || 0) > 9000) {
+                this.lastDarkStillHint = time;
+                gameEvents.emit("hud:hint", "Still here. Take your time.");
+            }
+            for (const echo of this.longDarkEchoes || []) {
+                const dist = Math.abs(echo.x - this.hero.x);
+                const visible = echo.heard ? 0.62 : Phaser.Math.Clamp(1 - (dist - 18) / 96, 0.12, 0.9);
+                echo.setAlpha(visible);
+            }
+            if (
+                this.longDarkExitOpen &&
+                this.longDarkExit &&
+                Math.abs(this.longDarkExit.x - this.hero.x) < 46
+            ) {
+                this._startLongDarkExit();
+            }
+            if (!this.completed) this._emitChapter14Progress();
+        }
+
+        // Chapter 15: Veer's chamber waits until the opening dialogue completes
+        if (this.chapterId === 15 && canMove) {
+            if (!this.courageStarted) {
+                vx = 0;
+                vy = 0;
+            }
+            if (!this.completed) this._emitChapter15Progress();
+        }
+
         // Clamp hero position
         this.hero.x = Phaser.Math.Clamp(this.hero.x + vx, 30, W - 30);
         this.hero.y = Phaser.Math.Clamp(
@@ -3040,6 +3461,8 @@ export default class ChapterScene extends Phaser.Scene {
         if (this.chapterId === 11) intensity = 0.035;
         if (this.chapterId === 12) intensity = 0.085 * (this.inwardMistStrength || 1);
         if (this.chapterId === 13) intensity = 0.018;
+        if (this.chapterId === 14) intensity = 0.025;
+        if (this.chapterId === 15) intensity = 0.04;
         if (this.chapterId === 3) intensity = 0.03;
         for (let i = 0; i < bands; i++) {
             const y = 80 + i * 65 + Math.sin((this._fogOffset + i * 20) * 0.05) * 6;

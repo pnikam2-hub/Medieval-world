@@ -178,8 +178,34 @@ export const CHAPTERS = [
             "When have you touched something vast, and what did it tell you about the size of your own life?",
         helperLine: "Small but not alone. That is exactly the thing. - Kavi",
     },
-    { id: 14, title: "Enter the Cave", subtitle: "Belly of the long dark", unlocked: false, kind: "locked" },
-    { id: 15, title: "Courage", subtitle: "Veer, Guardian of Courage", unlocked: false, kind: "locked" },
+    {
+        id: 14,
+        title: "The Long Dark",
+        subtitle: "Where even names echo",
+        unlocked: true,
+        kind: "explore",
+        narration:
+            "The vastness closes gently. What opens now is narrow, dark, and old.",
+        endText:
+            "The long dark is not empty. It is full of things that waited for light, and light, even small light, is enough to find them.",
+        journalQuestion:
+            "What part of yourself have you left in the dark, and what would it mean to turn the lantern toward it just to let it know you came back?",
+        helperLine: "Still here. Take your time. - Kavi",
+    },
+    {
+        id: 15,
+        title: "Courage",
+        subtitle: "Veer, Guardian of Courage",
+        unlocked: true,
+        kind: "helper",
+        narration:
+            "A stone chamber waits beyond the long dark, veined with amber light and guarded by someone who does not move.",
+        endText:
+            "Courage is not a roar. It is a quiet voice at the end of the day that says: I will try again tomorrow.",
+        journalQuestion:
+            "What fear have you been calling cowardice that is actually love: afraid of failing, afraid of harming, afraid of losing someone you have not yet found again?",
+        helperLine: "The stillest things are often the strongest. - You",
+    },
     { id: 16, title: "Helpers", subtitle: "Asha, Nadi, Soma, Rhea", unlocked: false, kind: "locked" },
     { id: 17, title: "Belly of the Whale", subtitle: "Listening beneath the surface", unlocked: false, kind: "locked" },
     { id: 18, title: "Rescue", subtitle: "What the heart remembers", unlocked: false, kind: "locked" },
@@ -825,4 +851,139 @@ export const APOTHEOSIS_DIALOGUE = [
         speaker: "Kavi",
         text: "I will remember this. When it gets dark again. I will remember the lanterns.",
     },
+];
+
+export const LONG_DARK_OPENING = [
+    {
+        speaker: null,
+        kind: "narration",
+        text: "The vastness closes. Not harshly, but gently, like a door that knows you will return.",
+    },
+    {
+        speaker: null,
+        kind: "narration",
+        text: "What opens now is narrow. Dark. Old. This is the place beneath the chamber, beneath the stones, beneath even the voice that named them.",
+    },
+    { speaker: "Kavi", text: "It is... very dark. Even for me. And I live in a lantern." },
+    { speaker: "You", text: "The lantern is enough. It only has to show the next step." },
+    { speaker: "Kavi", text: "Then I will watch the step with you." },
+];
+
+export const LONG_DARK_ECHOES = [
+    {
+        id: "hum",
+        x: 0.2,
+        shape: "child",
+        surfaceLabel: "Just a shadow",
+        hiddenLabel: "The self that still knew how to hum",
+        deeperLabel: "You hummed through fear. You still can.",
+        fragment: "Someone small is humming. The tune is familiar. You cannot place it.",
+        kaviLine: "A hum. That means someone was here. Someone who could still make sound.",
+    },
+    {
+        id: "door",
+        x: 0.35,
+        shape: "door",
+        surfaceLabel: "A sealed room",
+        hiddenLabel: "Where you put the memory you could not carry",
+        deeperLabel: "The door was not locked. You just stopped trying the handle.",
+        fragment: "A door. It has been closed so long the hinges have forgotten how to cry out.",
+    },
+    {
+        id: "handprint",
+        x: 0.5,
+        shape: "handprint",
+        surfaceLabel: "A mark on stone",
+        hiddenLabel: "Proof that someone waited for you here",
+        deeperLabel: "They waited. You came. That is the whole story.",
+        fragment:
+            "A handprint. Smaller than yours. Pressed into the stone as if to say: I was here. I was alone. I waited.",
+        kaviLine: "The handprint. They waited. I wonder if anyone came.",
+    },
+    {
+        id: "feather",
+        x: 0.65,
+        shape: "feather",
+        surfaceLabel: "Bird debris",
+        hiddenLabel: "Something that could fly passed through here",
+        deeperLabel: "Even in the long dark, things with wings have been.",
+        fragment: "A feather. Grey. Soft. Something flew through here once and left this behind.",
+    },
+    {
+        id: "mirror",
+        x: 0.82,
+        shape: "mirror",
+        surfaceLabel: "Broken glass",
+        hiddenLabel: "A self you left behind, still waiting",
+        deeperLabel: "They do not blame you. They have just been waiting to be seen.",
+        fragment:
+            "A mirror. Cracked but not shattered. In it, your own face, younger, looking back without recognition.",
+        kaviLine: "Your own face. Younger. You came back for them. You actually came back.",
+    },
+];
+
+export const LONG_DARK_EXIT_DIALOGUE = [
+    { speaker: "Kavi", text: "There. Light. It is not the vastness. It is something smaller. Warmer." },
+    { speaker: "You", text: "Enough to see by. Enough to keep walking." },
+];
+
+export const COURAGE_OPENING = [
+    { speaker: "Veer", text: "You crossed the inward threshold. You touched the vastness. You walked the long dark." },
+    { speaker: "Veer", text: "Now you stand before me. Do you know what I guard?" },
+    { speaker: "You", text: "Courage." },
+    {
+        speaker: "Veer",
+        text: "No. I guard the lie that courage means fearlessness. Courage is fear, held, named, and walked beside.",
+    },
+    {
+        speaker: "Veer",
+        text: "Three things in this room still frighten you. Look at them with the Mirror held steady.",
+    },
+    { speaker: "Kavi", text: "Held steady. We know how to do that. Tara taught us." },
+];
+
+export const COURAGE_FEAR_OBJECTS = [
+    {
+        id: "failure",
+        x: 0.28,
+        shape: "mirror",
+        surfaceLabel: "Just my reflection",
+        hiddenLabel: "I am afraid of failing everyone who believes in me",
+        deeperLabel: "The fear of failing is proof that you care. Care is not weakness.",
+        veerLine:
+            "The fear of failing those who believe in you is not cowardice. That is love, afraid of its own insufficiency.",
+    },
+    {
+        id: "anger",
+        x: 0.52,
+        shape: "fist",
+        surfaceLabel: "Anger I thought I named",
+        hiddenLabel: "I am afraid of what I might do if I let anger speak",
+        deeperLabel: "Anger named is anger companioned. It will not consume you now.",
+        veerLine:
+            "The anger you named in the chamber still frightens you. Good. Named anger is still anger, but named anger does not own you.",
+    },
+    {
+        id: "trust",
+        x: 0.76,
+        shape: "child",
+        surfaceLabel: "Someone I left behind",
+        hiddenLabel: "I am afraid I have lost the self who knew how to trust",
+        deeperLabel: "They did not leave. They have been waiting. You are the one returning.",
+        veerLine:
+            "The child you think you lost is not gone. That child is the part of you that still knows how to wait without despair.",
+    },
+];
+
+export const COURAGE_CLOSING = [
+    {
+        speaker: "Veer",
+        text: "You have looked at three fears and you are still here. That is courage. Not the roar. The staying.",
+    },
+    {
+        speaker: "Veer",
+        text: "Go now. The deeper dark is ahead. But you will not enter it the same way you entered this room.",
+    },
+    { speaker: "Kavi", text: "He did not move. The whole time. He did not need to." },
+    { speaker: "You", text: "The stillest things are often the strongest." },
 ];

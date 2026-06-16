@@ -1,5 +1,8 @@
 import {
     APOTHEOSIS_DIALOGUE,
+    COURAGE_CLOSING,
+    COURAGE_FEAR_OBJECTS,
+    COURAGE_OPENING,
     CITIZENS,
     INITIATION_CLOSING_DIALOGUE,
     INITIATION_OPENING_DIALOGUE,
@@ -7,6 +10,9 @@ import {
     INITIATION_WELL_DIALOGUE,
     INWARD_THRESHOLD_ARRIVAL,
     INWARD_THRESHOLD_OPENING,
+    LONG_DARK_ECHOES,
+    LONG_DARK_EXIT_DIALOGUE,
+    LONG_DARK_OPENING,
     KAVI_DIALOGUE,
     MURAL_DIALOGUE,
     SHADOW_DIALOGUE,
@@ -35,6 +41,7 @@ export const SPEAKER_HIDDEN_LABELS = {
     Rhea: "Builds what was once burned",
     "The Well": "A chamber learning to answer",
     "The Vastness": "What was never wounded",
+    Veer: "What stays when everything else runs",
 };
 
 export const TARA_CHOICE_BLOCK =
@@ -190,6 +197,31 @@ export function buildScript(payload) {
     }
     if (payload.name === "apotheosis-dialogue") {
         return APOTHEOSIS_DIALOGUE.map(withSpeakerLabel);
+    }
+    if (payload.name === "long-dark-opening") {
+        return LONG_DARK_OPENING.map(withSpeakerLabel);
+    }
+    if (payload.name === "long-dark-echo") {
+        const echo = LONG_DARK_ECHOES.find((x) => x.id === payload.echoId);
+        if (!echo) return null;
+        return [
+            { speaker: null, kind: "narration", text: echo.fragment },
+            ...(echo.kaviLine ? [{ speaker: "Kavi", text: echo.kaviLine }] : []),
+        ].map(withSpeakerLabel);
+    }
+    if (payload.name === "long-dark-exit") {
+        return LONG_DARK_EXIT_DIALOGUE.map(withSpeakerLabel);
+    }
+    if (payload.name === "courage-opening") {
+        return COURAGE_OPENING.map(withSpeakerLabel);
+    }
+    if (payload.name === "courage-fear") {
+        const fear = COURAGE_FEAR_OBJECTS.find((x) => x.id === payload.fearId);
+        if (!fear) return null;
+        return [{ speaker: "Veer", text: fear.veerLine }].map(withSpeakerLabel);
+    }
+    if (payload.name === "courage-closing") {
+        return COURAGE_CLOSING.map(withSpeakerLabel);
     }
     if (payload.name === "shadow-dialogue") {
         return [
