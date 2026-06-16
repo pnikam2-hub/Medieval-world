@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { gameEvents } from "./events";
 import {
+    INWARD_THRESHOLD_MARKERS,
     INITIATION_STONES,
     MEMORY_BUOYS,
     RIVER_HELPERS,
@@ -61,6 +62,8 @@ export default class ChapterScene extends Phaser.Scene {
         else if (chapterId === 9) this._setupChapter9();
         else if (chapterId === 10) this._setupChapter10();
         else if (chapterId === 11) this._setupChapter11();
+        else if (chapterId === 12) this._setupChapter12();
+        else if (chapterId === 13) this._setupChapter13();
 
         // Mirror lens toggle from React
         this._onMirror = (active) => {
@@ -145,13 +148,48 @@ export default class ChapterScene extends Phaser.Scene {
             this.bgLayer.add(closer);
         }
 
-        if ([4].includes(this.chapterId)) {
+        if ([4, 12].includes(this.chapterId)) {
             // Open road out of city, soft hills
             const hills = this.add.graphics();
-            hills.fillStyle(0x121212, 1);
+            hills.fillStyle(this.chapterId === 12 ? 0x15110e : 0x121212, 1);
             hills.fillEllipse(W * 0.2, H - 30, 600, 220);
             hills.fillEllipse(W * 0.7, H - 20, 720, 260);
+            if (this.chapterId === 12) {
+                hills.fillStyle(0xfadb5f, 0.035);
+                hills.fillEllipse(W * 0.5, H * 0.62, W * 0.54, H * 0.62);
+                hills.lineStyle(1, 0xe2e8f0, 0.05);
+                for (let i = 0; i < 9; i++) {
+                    hills.strokeRoundedRect(120 + i * 78, 70 + i * 3, 44, H - 158, 18);
+                }
+            }
             this.bgLayer.add(hills);
+        }
+
+        if ([13].includes(this.chapterId)) {
+            const vast = this.add.graphics();
+            vast.fillGradientStyle(0x02030a, 0x040714, 0x08111f, 0x02030a, 1);
+            vast.fillRect(0, 0, W, H);
+            vast.fillStyle(0xfadb5f, 0.035);
+            vast.fillEllipse(W / 2, H - 72, W * 0.78, 120);
+            this.bgLayer.add(vast);
+
+            for (let i = 0; i < 120; i++) {
+                const lx = 40 + Math.random() * (W - 80);
+                const ly = 40 + Math.random() * (H - 170);
+                const radius = 0.7 + Math.random() * 1.9;
+                const dot = this.add.circle(lx, ly, radius, 0xfadb5f, 0.25 + Math.random() * 0.55);
+                dot.setBlendMode(Phaser.BlendModes.ADD);
+                this.tweens.add({
+                    targets: dot,
+                    alpha: { from: 0.15, to: 0.95 },
+                    scale: { from: 0.8, to: 1.35 },
+                    duration: 2200 + Math.random() * 4200,
+                    yoyo: true,
+                    repeat: -1,
+                    ease: "sine.inOut",
+                });
+                this.bgLayer.add(dot);
+            }
         }
 
         if ([8].includes(this.chapterId)) {
@@ -1302,6 +1340,105 @@ export default class ChapterScene extends Phaser.Scene {
         this._emitChapter11Progress();
     }
 
+    // ------------------------------------------------------------------
+    // Chapter 12: The Inward Threshold - cross the mist that turns inward
+    // ------------------------------------------------------------------
+    _setupChapter12() {
+        this.inwardMistStrength = 1.05;
+        this.inwardArrivalStarted = false;
+        this.inwardMarkers = [];
+        this._spawnKavi();
+
+        INWARD_THRESHOLD_MARKERS.forEach((data, idx) => {
+            const marker = this.add.container(W * data.x, H - 76);
+            const glow = this.add.circle(0, 0, 18, 0xfadb5f, 0.12);
+            glow.setBlendMode(Phaser.BlendModes.ADD);
+            const sigil = this.add.graphics();
+            sigil.lineStyle(1, 0xfadb5f, 0.55);
+            sigil.strokeCircle(0, 0, 12);
+            sigil.strokeTriangle(-7, 5, 7, 5, 0, -9);
+            const num = this.add.text(0, 19, String(idx + 1), {
+                fontFamily: "Outfit, sans-serif",
+                fontSize: "10px",
+                color: "#fadb5f",
+            });
+            num.setOrigin(0.5);
+            marker.add([glow, sigil, num]);
+            marker.reached = false;
+            marker.markerText = data.text;
+            marker.glow = glow;
+            this.tweens.add({
+                targets: glow,
+                alpha: { from: 0.05, to: 0.28 },
+                scale: { from: 0.8, to: 1.35 },
+                duration: 1700 + idx * 240,
+                yoyo: true,
+                repeat: -1,
+                ease: "sine.inOut",
+            });
+            this.worldLayer.add(marker);
+            this.inwardMarkers.push(marker);
+        });
+
+        const gate = this.add.container(W - 58, H - 108);
+        const arch = this.add.graphics();
+        arch.lineStyle(2, 0xe2e8f0, 0.55);
+        arch.strokeRoundedRect(-22, -62, 44, 62, 20);
+        arch.fillStyle(0xfadb5f, 0.08);
+        arch.fillRoundedRect(-22, -62, 44, 62, 20);
+        const core = this.add.circle(0, -30, 18, 0xfadb5f, 0.16);
+        core.setBlendMode(Phaser.BlendModes.ADD);
+        gate.add([core, arch]);
+        gate.kind = "inward-gate";
+        gate.core = core;
+        this.worldLayer.add(gate);
+        this.inwardGate = gate;
+
+        this._showNarration(
+            "The outer journey is done. Every gate, every sea, every helper along the river. But there is one threshold no one else can see."
+        );
+        this._afterDialogue = () => {
+            gameEvents.emit("script:start", { name: "inward-threshold-opening" });
+            this._afterDialogue = () => {
+                this._emitChapter12Progress();
+                gameEvents.emit(
+                    "hud:hint",
+                    "Hold right through the silver mist. Pause at each lantern marker."
+                );
+            };
+        };
+        this._emitChapter12Progress();
+    }
+
+    // ------------------------------------------------------------------
+    // Chapter 13: Apotheosis - a brief moment of vastness
+    // ------------------------------------------------------------------
+    _setupChapter13() {
+        this._spawnKavi();
+        this.hero.x = W * 0.5;
+        this.hero.y = H - 118;
+        if (this.heroLanternHalo) {
+            this.tweens.add({
+                targets: this.heroLanternHalo,
+                scale: { from: 1.2, to: 2.8 },
+                alpha: { from: 0.22, to: 0.5 },
+                duration: 2600,
+                yoyo: true,
+                repeat: -1,
+                ease: "sine.inOut",
+            });
+        }
+        gameEvents.emit("chapter:progress", {
+            objective: "Experience the vastness.",
+            detail: "Advance the dialogue and let the lanterns answer.",
+            phase: "Lantern field",
+        });
+        this.time.delayedCall(600, () => {
+            this._afterDialogue = () => this._completeChapter();
+            gameEvents.emit("script:start", { name: "apotheosis-dialogue" });
+        });
+    }
+
     _spawnKavi() {
         if (this.kaviSpawned) return;
         this.kaviSpawned = true;
@@ -2334,6 +2471,7 @@ export default class ChapterScene extends Phaser.Scene {
         if (this.chapterId === 9) this._emitChapter9Progress();
         if (this.chapterId === 10) this._emitChapter10Progress();
         if (this.chapterId === 11) this._emitChapter11Progress();
+        if (this.chapterId === 12) this._emitChapter12Progress();
         gameEvents.emit("chapter:complete", { chapterId: this.chapterId });
     }
 
@@ -2554,6 +2692,26 @@ export default class ChapterScene extends Phaser.Scene {
         });
     }
 
+    _emitChapter12Progress() {
+        if (!this.inwardMarkers || !this.inwardGate) return;
+        const reached = this.inwardMarkers.filter((m) => m.reached).length;
+        const start = W * 0.18;
+        const end = this.inwardGate.x;
+        const raw = (this.hero.x - start) / Math.max(1, end - start);
+        const distance = Phaser.Math.Clamp(Math.floor(raw * 10), 0, 10);
+        gameEvents.emit("chapter:progress", {
+            objective: "Cross the inward threshold.",
+            detail:
+                reached < 3
+                    ? "Hold right through the silver mist. The markers will speak when you reach them."
+                    : "The final opening is ahead. Keep carrying the lantern inward.",
+            label: "markers",
+            current: Math.min(10, Math.max(distance, reached * 3)),
+            total: 10,
+            phase: reached < 3 ? `Marker ${reached}/3` : "Inward gate",
+        });
+    }
+
     _isBreathInhale() {
         const period = this.breathPeriod || 4;
         const phase = ((this.breathT || 0) % period) / period;
@@ -2624,7 +2782,7 @@ export default class ChapterScene extends Phaser.Scene {
         const canMove =
             !this.dialogueOpen &&
             !this.completed &&
-            !(this.chapterId === 3); // Ch3 is dialogue only
+            !(this.chapterId === 3 || this.chapterId === 13); // dialogue only chapters
 
         if (canMove) {
             if (leftDown) vx -= 1;
@@ -2800,6 +2958,44 @@ export default class ChapterScene extends Phaser.Scene {
             if (!this.completed) this._emitChapter11Progress();
         }
 
+        // Chapter 12: push through the inward mist and pause at three markers
+        if (this.chapterId === 12 && canMove) {
+            const progress = Phaser.Math.Clamp(
+                (this.hero.x - W * 0.18) / (W * 0.72),
+                0,
+                1
+            );
+            this.inwardMistStrength = Phaser.Math.Clamp(1.05 - progress * 0.72, 0.28, 1.05);
+            vx -= 0.34 * this.inwardMistStrength * speed * dt;
+            vx *= 0.62;
+
+            for (const marker of this.inwardMarkers || []) {
+                if (!marker.reached && this.hero.x >= marker.x - 18) {
+                    marker.reached = true;
+                    if (marker.glow) marker.glow.setFillStyle(0xfadb5f, 0.48);
+                    gameEvents.emit("lantern:adjust", 0.015);
+                    gameEvents.emit("dialogue:open", {
+                        speaker: null,
+                        kind: "narration",
+                        text: marker.markerText,
+                    });
+                    this._emitChapter12Progress();
+                    break;
+                }
+            }
+
+            if (
+                this.inwardGate &&
+                !this.inwardArrivalStarted &&
+                Math.abs(this.inwardGate.x - this.hero.x) < 42
+            ) {
+                this.inwardArrivalStarted = true;
+                this._afterDialogue = () => this._completeChapter();
+                gameEvents.emit("script:start", { name: "inward-threshold-arrival" });
+            }
+            if (!this.completed) this._emitChapter12Progress();
+        }
+
         // Clamp hero position
         this.hero.x = Phaser.Math.Clamp(this.hero.x + vx, 30, W - 30);
         this.hero.y = Phaser.Math.Clamp(
@@ -2842,6 +3038,8 @@ export default class ChapterScene extends Phaser.Scene {
         if (this.chapterId === 9) intensity = 0.055;
         if (this.chapterId === 10) intensity = 0.025;
         if (this.chapterId === 11) intensity = 0.035;
+        if (this.chapterId === 12) intensity = 0.085 * (this.inwardMistStrength || 1);
+        if (this.chapterId === 13) intensity = 0.018;
         if (this.chapterId === 3) intensity = 0.03;
         for (let i = 0; i < bands; i++) {
             const y = 80 + i * 65 + Math.sin((this._fogOffset + i * 20) * 0.05) * 6;

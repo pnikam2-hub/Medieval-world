@@ -1,9 +1,12 @@
 import {
+    APOTHEOSIS_DIALOGUE,
     CITIZENS,
     INITIATION_CLOSING_DIALOGUE,
     INITIATION_OPENING_DIALOGUE,
     INITIATION_STONES,
     INITIATION_WELL_DIALOGUE,
+    INWARD_THRESHOLD_ARRIVAL,
+    INWARD_THRESHOLD_OPENING,
     KAVI_DIALOGUE,
     MURAL_DIALOGUE,
     SHADOW_DIALOGUE,
@@ -31,6 +34,7 @@ export const SPEAKER_HIDDEN_LABELS = {
     Soma: "Keeps fire through fear",
     Rhea: "Builds what was once burned",
     "The Well": "A chamber learning to answer",
+    "The Vastness": "What was never wounded",
 };
 
 export const TARA_CHOICE_BLOCK =
@@ -177,6 +181,15 @@ export function buildScript(payload) {
         return [...INITIATION_WELL_DIALOGUE, ...INITIATION_CLOSING_DIALOGUE].map(
             withSpeakerLabel
         );
+    }
+    if (payload.name === "inward-threshold-opening") {
+        return INWARD_THRESHOLD_OPENING.map(withSpeakerLabel);
+    }
+    if (payload.name === "inward-threshold-arrival") {
+        return INWARD_THRESHOLD_ARRIVAL.map(withSpeakerLabel);
+    }
+    if (payload.name === "apotheosis-dialogue") {
+        return APOTHEOSIS_DIALOGUE.map(withSpeakerLabel);
     }
     if (payload.name === "shadow-dialogue") {
         return [

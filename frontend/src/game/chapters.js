@@ -150,8 +150,34 @@ export const CHAPTERS = [
             "What have you been keeping company with in silence, and what might shift if you spoke its name gently, just once?",
         helperLine: "A true name is not a chain. It is a doorway. - Kavi",
     },
-    { id: 12, title: "Threshold Crossing", subtitle: "The inward turn", unlocked: false, kind: "locked" },
-    { id: 13, title: "Apotheosis", subtitle: "Brief moment of vastness", unlocked: false, kind: "locked" },
+    {
+        id: 12,
+        title: "The Inward Threshold",
+        subtitle: "No one else can verify this crossing",
+        unlocked: true,
+        kind: "traverse",
+        narration:
+            "The outer journey is done. But there is one threshold no one else can see.",
+        endText:
+            "Some thresholds are crossed alone. Not because no one would come, but because only you can carry the lantern inward.",
+        journalQuestion:
+            "What threshold have you been standing at, and what would it take to let yourself cross it because you mean it?",
+        helperLine: "I am still here. Counting your steps. - Kavi",
+    },
+    {
+        id: 13,
+        title: "Apotheosis",
+        subtitle: "A brief moment of vastness",
+        unlocked: true,
+        kind: "dialogue",
+        narration:
+            "The inward passage opens into something without walls, where every distant light is another lantern.",
+        endText:
+            "You are small in the way a lantern is small: not insufficient, but precisely enough to see by.",
+        journalQuestion:
+            "When have you touched something vast, and what did it tell you about the size of your own life?",
+        helperLine: "Small but not alone. That is exactly the thing. - Kavi",
+    },
     { id: 14, title: "Enter the Cave", subtitle: "Belly of the long dark", unlocked: false, kind: "locked" },
     { id: 15, title: "Courage", subtitle: "Veer, Guardian of Courage", unlocked: false, kind: "locked" },
     { id: 16, title: "Helpers", subtitle: "Asha, Nadi, Soma, Rhea", unlocked: false, kind: "locked" },
@@ -705,4 +731,98 @@ export const INITIATION_CLOSING_DIALOGUE = [
     { speaker: "You", text: "I did not know if I could." },
     { speaker: "The Well", text: "And yet." },
     { speaker: "Kavi", text: "...And yet." },
+];
+
+export const INWARD_THRESHOLD_MARKERS = [
+    {
+        id: "old-world",
+        x: 0.35,
+        text: "The old world is still behind you. It is not angry. It is just waiting to see if you mean it.",
+    },
+    {
+        id: "turn-back",
+        x: 0.55,
+        text: "Something in you wants to turn back. That something is not weakness. It is care for who you were.",
+    },
+    {
+        id: "honest-step",
+        x: 0.75,
+        text: "The next step is not about bravery. It is about honesty. You know the way now.",
+    },
+];
+
+export const INWARD_THRESHOLD_OPENING = [
+    {
+        speaker: null,
+        kind: "narration",
+        text: "It turns inward. It has no guards. It has only the mist of everything you might still turn back for.",
+    },
+    {
+        speaker: "Kavi",
+        text: "This one... this one is different. The first gate was about leaving. This one is about arriving somewhere there are no maps.",
+    },
+    {
+        speaker: "You",
+        text: "I know. I can feel it. The lantern does not need more light. It needs me to follow it inward.",
+    },
+];
+
+export const INWARD_THRESHOLD_ARRIVAL = [
+    {
+        speaker: "Kavi",
+        text: "You crossed. You actually crossed. I thought you might stop at the third marker.",
+    },
+    {
+        speaker: "You",
+        text: "I almost did. But I remembered what Tara said about honest steps.",
+    },
+    {
+        speaker: "Kavi",
+        text: "Then we are really doing this. The inside of the inside.",
+    },
+];
+
+export const APOTHEOSIS_DIALOGUE = [
+    {
+        speaker: null,
+        kind: "narration",
+        text: "The passage opens. Not into another chamber. Into something without walls.",
+    },
+    {
+        speaker: null,
+        kind: "narration",
+        text: "Above you, lights: hundreds, thousands. Not stars. Lanterns. So distant they are barely warm. But they are there.",
+    },
+    { speaker: "You", text: "How many...?" },
+    {
+        speaker: "Kavi",
+        text: "Everyone. Everyone who ever carried a lantern. Everyone who ever will.",
+    },
+    {
+        speaker: "Kavi",
+        text: "I thought I was small before. I did not understand what small meant.",
+    },
+    { speaker: "You", text: "Small but not alone." },
+    {
+        speaker: "Kavi",
+        text: "...No. Not alone. That is the thing. That is exactly the thing.",
+    },
+    { speaker: "The Vastness", text: "You who have named four stones." },
+    { speaker: "The Vastness", text: "Beneath the stones, this." },
+    { speaker: "The Vastness", text: "Unnamed. Unwounded. Waiting." },
+    { speaker: "You", text: "Was this always here?" },
+    { speaker: "The Vastness", text: "Before the first stone. Before the first wound. Yes." },
+    {
+        speaker: "Kavi",
+        text: "I can feel it. Under everything. It does not hurt.",
+    },
+    {
+        speaker: null,
+        kind: "narration",
+        text: "The moment passes. Vastness cannot be held, only touched. But the memory of it settles into the lantern like a second flame.",
+    },
+    {
+        speaker: "Kavi",
+        text: "I will remember this. When it gets dark again. I will remember the lanterns.",
+    },
 ];
