@@ -9,6 +9,9 @@ import {
     TRIAL_FIRES,
     TRIAL_OPENING_DIALOGUE,
     MEMORY_BUOYS,
+    RIVER_CLOSING_DIALOGUE,
+    RIVER_HELPERS,
+    RIVER_OPENING_DIALOGUE,
     SEA_CLOSING_DIALOGUE,
     SEA_OPENING_LINES,
 } from "@/game/chapters";
@@ -19,6 +22,10 @@ export const SPEAKER_HIDDEN_LABELS = {
     "Mural Voice": "A door, a memory",
     "Shadow Twin": "Wounded, protective self",
     Kavi: "Loyal companion",
+    Asha: "Remembers for others",
+    Nadi: "Listens beneath the current",
+    Soma: "Keeps fire through fear",
+    Rhea: "Builds what was once burned",
 };
 
 export const TARA_CHOICE_BLOCK =
@@ -126,6 +133,22 @@ export function buildScript(payload) {
     }
     if (payload.name === "sea-closing") {
         return SEA_CLOSING_DIALOGUE.map(withSpeakerLabel);
+    }
+    if (payload.name === "river-opening") {
+        return RIVER_OPENING_DIALOGUE.map(withSpeakerLabel);
+    }
+    if (payload.name === "river-helper") {
+        const helper = RIVER_HELPERS.find((x) => x.id === payload.helperId);
+        if (!helper) return null;
+        return helper.lines.map((text) =>
+            withSpeakerLabel({
+                speaker: helper.name,
+                text,
+            })
+        );
+    }
+    if (payload.name === "river-closing") {
+        return RIVER_CLOSING_DIALOGUE.map(withSpeakerLabel);
     }
     if (payload.name === "shadow-dialogue") {
         return [

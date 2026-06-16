@@ -122,7 +122,20 @@ export const CHAPTERS = [
             "What grief, yours or someone else's, have you been holding your breath against?",
         helperLine: "It changes shape. That is not the same as leaving. But it becomes breathable. - Kavi",
     },
-    { id: 10, title: "Adventure", subtitle: "Helpers along the river", unlocked: false, kind: "locked" },
+    {
+        id: 10,
+        title: "Adventure",
+        subtitle: "Helpers along the river",
+        unlocked: true,
+        kind: "helpers",
+        narration:
+            "Beyond the sea, a river runs. Along its banks, four figures sit as if they have been waiting for someone.",
+        endText:
+            "You were never meant to walk alone. The helpers were always there; you just had to arrive at the river where they were waiting.",
+        journalQuestion:
+            "Who has been a helper on your journey, and have you let them know what their presence meant?",
+        helperLine: "The journey was always meant to be shared. - Kavi",
+    },
     { id: 11, title: "Initiation", subtitle: "Naming the unspoken", unlocked: false, kind: "locked" },
     { id: 12, title: "Threshold Crossing", subtitle: "The inward turn", unlocked: false, kind: "locked" },
     { id: 13, title: "Apotheosis", subtitle: "Brief moment of vastness", unlocked: false, kind: "locked" },
@@ -497,4 +510,78 @@ export const SEA_CLOSING_DIALOGUE = [
         speaker: "Kavi",
         text: "It changes shape. That is not the same as leaving. But it becomes breathable.",
     },
+];
+
+export const RIVER_HELPERS = [
+    {
+        id: "asha",
+        name: "Asha",
+        title: "The Rememberer",
+        hiddenLabel:
+            "Afraid that if I stop remembering, everything I love disappears",
+        x: 0.18,
+        color: 0xd7c0a1,
+        gift: "remembering",
+        lines: [
+            "Drink. It is just water. It is also every river you have ever crossed.",
+            "That is memory. It does not live only in the head. It lives in the body.",
+            "If you forget, someone else will remember for you. That is why we travel together.",
+        ],
+    },
+    {
+        id: "nadi",
+        name: "Nadi",
+        title: "The River-Listener",
+        hiddenLabel: "Afraid of my own silence",
+        x: 0.38,
+        color: 0x93c5fd,
+        gift: "listening",
+        lines: [
+            "Step into the water. Not to cross. Just to feel.",
+            "Rivers carry more than water. They carry every story spoken near their banks.",
+            "The river is carrying yours now. It has been carrying yours for a very long time.",
+        ],
+    },
+    {
+        id: "soma",
+        name: "Soma",
+        title: "The Fire-Keeper",
+        hiddenLabel: "Terrified of the dark inside myself",
+        x: 0.6,
+        color: 0xfb8500,
+        gift: "fire",
+        lines: [
+            "Hold out your lantern. Just for a moment.",
+            "You are just letting someone else's light touch yours.",
+            "Fire does not divide. Fire multiplies. That is the first thing.",
+        ],
+    },
+    {
+        id: "rhea",
+        name: "Rhea",
+        title: "The Bridge-Builder",
+        hiddenLabel: "I build bridges because I have burned too many",
+        x: 0.8,
+        color: 0xcbd5e1,
+        gift: "bridge",
+        lines: [
+            "This bridge has been waiting for the last stone.",
+            "The last stone is someone willing to cross it.",
+            "Stone remembers touch. This bridge will remember you.",
+        ],
+    },
+];
+
+export const RIVER_OPENING_DIALOGUE = [
+    { speaker: "Kavi", text: "There are people here. Actual people. This is the best chapter." },
+    { speaker: "You", text: "They look like they have been waiting." },
+    { speaker: "Kavi", text: "Maybe they have. Maybe the river told them." },
+];
+
+export const RIVER_CLOSING_DIALOGUE = [
+    { speaker: "Asha", text: "You carry our remembering now." },
+    { speaker: "Nadi", text: "You carry the river's listening." },
+    { speaker: "Soma", text: "You carry my fire, and yours." },
+    { speaker: "Rhea", text: "Cross. We will be here when you need us again." },
+    { speaker: "Kavi", text: "Four helpers. Four gifts. You thought you were doing this alone." },
 ];

@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { gameEvents } from "./events";
-import { MEMORY_BUOYS, TRIAL_FIRES } from "./chapters";
+import { MEMORY_BUOYS, RIVER_HELPERS, TRIAL_FIRES } from "./chapters";
 
 const W = 960;
 const H = 540;
@@ -54,6 +54,7 @@ export default class ChapterScene extends Phaser.Scene {
         else if (chapterId === 7) this._setupChapter7();
         else if (chapterId === 8) this._setupChapter8();
         else if (chapterId === 9) this._setupChapter9();
+        else if (chapterId === 10) this._setupChapter10();
 
         // Mirror lens toggle from React
         this._onMirror = (active) => {
@@ -157,6 +158,41 @@ export default class ChapterScene extends Phaser.Scene {
             dusk.fillEllipse(W * 0.26, H - 34, 620, 190);
             dusk.fillEllipse(W * 0.78, H - 22, 700, 210);
             this.bgLayer.add(dusk);
+        }
+
+        if ([10].includes(this.chapterId)) {
+            const dawn = this.add.graphics();
+            dawn.fillGradientStyle(0xdbeafe, 0xfef3c7, 0x172554, 0x082f49, 1);
+            dawn.fillRect(0, 0, W, H);
+            dawn.fillStyle(0x38bdf8, 0.28);
+            dawn.fillRect(0, H - 170, W, 78);
+            dawn.fillStyle(0x0ea5e9, 0.18);
+            dawn.fillRect(0, H - 132, W, 42);
+            dawn.fillStyle(0x102018, 0.9);
+            dawn.fillEllipse(W * 0.4, H - 36, W * 0.95, 138);
+            dawn.fillEllipse(W * 0.88, H - 26, W * 0.56, 112);
+            this.bgLayer.add(dawn);
+
+            for (let i = 0; i < 24; i++) {
+                const sparkle = this.add.circle(
+                    40 + Math.random() * (W - 80),
+                    H - 160 + Math.random() * 60,
+                    1.2,
+                    0xfadb5f,
+                    0.35
+                );
+                sparkle.setBlendMode(Phaser.BlendModes.ADD);
+                this.tweens.add({
+                    targets: sparkle,
+                    x: sparkle.x + 30 + Math.random() * 70,
+                    alpha: { from: 0.15, to: 0.65 },
+                    duration: 1800 + Math.random() * 1800,
+                    yoyo: true,
+                    repeat: -1,
+                    ease: "sine.inOut",
+                });
+                this.bgLayer.add(sparkle);
+            }
         }
 
         if ([3].includes(this.chapterId)) {
@@ -1099,6 +1135,74 @@ export default class ChapterScene extends Phaser.Scene {
         this._emitChapter9Progress();
     }
 
+    // ------------------------------------------------------------------
+    // Chapter 10: Adventure - meet four helpers and cross the bridge
+    // ------------------------------------------------------------------
+    _setupChapter10() {
+        this.riverHelpers = [];
+        this.bridgeOpen = false;
+        this.bridgeDialogueStarted = false;
+
+        this._spawnKavi();
+
+        RIVER_HELPERS.forEach((data) => {
+            const helper = this._makeNpc(W * data.x, H - 112, data.name, {
+                surfaceLabel: data.title,
+                hiddenLabel: data.hiddenLabel,
+            });
+            const gift = this.add.circle(14, -24, 5, data.color, 0.92);
+            gift.setBlendMode(Phaser.BlendModes.ADD);
+            const giftGlow = this.add.circle(14, -24, 18, data.color, 0.16);
+            giftGlow.setBlendMode(Phaser.BlendModes.ADD);
+            helper.add([giftGlow, gift]);
+            helper.helperId = data.id;
+            helper.met = false;
+            helper.giftColor = data.color;
+            helper.kind = "river-helper";
+            this.worldLayer.add(helper);
+            this.riverHelpers.push(helper);
+        });
+
+        const bridge = this.add.container(W - 58, H - 108);
+        const stones = this.add.graphics();
+        stones.fillStyle(0x475569, 0.52);
+        for (let i = 0; i < 4; i++) {
+            stones.fillRoundedRect(-54 + i * 24, -4 - i * 2, 20, 12, 3);
+        }
+        const missing = this.add.graphics();
+        missing.lineStyle(1, 0xfadb5f, 0.2);
+        missing.strokeRoundedRect(38, -12, 20, 12, 3);
+        const glow = this.add.circle(24, -8, 36, 0xfadb5f, 0.03);
+        glow.setBlendMode(Phaser.BlendModes.ADD);
+        bridge.add([glow, stones, missing]);
+        bridge.setAlpha(0.38);
+        bridge.kind = "river-bridge";
+        bridge.glow = glow;
+        this._attachMirrorLabels(
+            bridge,
+            "Half-built bridge",
+            "Connection becomes crossing",
+            -48
+        );
+        this.worldLayer.add(bridge);
+        this.riverBridge = bridge;
+
+        this._showNarration(
+            "Beyond the sea, a river runs. Along its banks, four figures sit as if they have been waiting for someone."
+        );
+        this._afterDialogue = () => {
+            gameEvents.emit("script:start", { name: "river-opening" });
+            this._afterDialogue = () => {
+                this._emitChapter10Progress();
+                gameEvents.emit(
+                    "hud:hint",
+                    "Meet the four helpers. Mirror reveals what each helper carries."
+                );
+            };
+        };
+        this._emitChapter10Progress();
+    }
+
     _spawnKavi() {
         if (this.kaviSpawned) return;
         this.kaviSpawned = true;
@@ -1223,6 +1327,7 @@ export default class ChapterScene extends Phaser.Scene {
             ...(this.memoryShards || []).filter((s) => !s.collected),
             ...(this.trialFires || []).filter((f) => !f.completed),
             ...(this.memoryBuoys || []).filter((b) => !b.heard),
+            ...(this.riverHelpers || []).filter((h) => !h.met),
             this.tara,
             this.mural,
             this.shadowTwin,
@@ -1230,6 +1335,7 @@ export default class ChapterScene extends Phaser.Scene {
             this.kavi,
             this.centralFlame,
             this.farShore,
+            this.riverBridge,
         ].filter(Boolean);
 
         targets.forEach((t) => {
@@ -1365,6 +1471,23 @@ export default class ChapterScene extends Phaser.Scene {
                     label: "Reach shore",
                 });
             }
+        } else if (this.chapterId === 10) {
+            (this.riverHelpers || [])
+                .filter((h) => !h.met)
+                .forEach((h) =>
+                    candidates.push({
+                        target: h,
+                        range: 68,
+                        label: "Receive gift",
+                    })
+                );
+            if (this.bridgeOpen && this.riverBridge) {
+                candidates.push({
+                    target: this.riverBridge,
+                    range: 64,
+                    label: "Cross bridge",
+                });
+            }
         }
 
         let nearest = null;
@@ -1459,6 +1582,14 @@ export default class ChapterScene extends Phaser.Scene {
                     : heard < 3
                       ? "Use Mirror near memory buoys, then press Space to listen."
                       : "Pause during exhale. Stillness accumulates; the sea notices."
+            );
+        } else if (this.chapterId === 10) {
+            const met = this.riverHelpers?.filter((h) => h.met).length || 0;
+            gameEvents.emit(
+                "hud:hint",
+                met < 4
+                    ? "Stand beside a helper and press Space. Mirror reveals what they carry."
+                    : "The bridge is complete. Cross it."
             );
         }
     }
@@ -1588,6 +1719,26 @@ export default class ChapterScene extends Phaser.Scene {
                 Math.abs(this.farShore.x - this.hero.x) < 62
             ) {
                 this._startSeaClosing();
+                return;
+            }
+            this._showNoTargetHint();
+        } else if (this.chapterId === 10) {
+            for (const helper of this.riverHelpers || []) {
+                if (Math.abs(helper.x - this.hero.x) < 68 && !helper.met) {
+                    gameEvents.emit("script:start", {
+                        name: "river-helper",
+                        helperId: helper.helperId,
+                    });
+                    this._afterDialogue = () => this._completeRiverHelper(helper);
+                    return;
+                }
+            }
+            if (
+                this.bridgeOpen &&
+                this.riverBridge &&
+                Math.abs(this.riverBridge.x - this.hero.x) < 64
+            ) {
+                this._startRiverClosing();
                 return;
             }
             this._showNoTargetHint();
@@ -1884,6 +2035,62 @@ export default class ChapterScene extends Phaser.Scene {
         gameEvents.emit("script:start", { name: "sea-closing" });
     }
 
+    _completeRiverHelper(helper) {
+        if (!helper || helper.met) return;
+        helper.met = true;
+        gameEvents.emit("lantern:adjust", 0.06);
+        gameEvents.emit("fx:flicker");
+        this.tweens.add({
+            targets: helper,
+            y: helper.y - 6,
+            duration: 340,
+            yoyo: true,
+            ease: "sine.inOut",
+        });
+
+        const met = this.riverHelpers.filter((h) => h.met).length;
+        if (met === 2) {
+            gameEvents.emit("dialogue:open", {
+                speaker: "Kavi",
+                text: "They are all carrying something, aren't they? Even the helpers.",
+            });
+        }
+        if (met === 4 && !this.bridgeOpen) {
+            this.bridgeOpen = true;
+            if (this.riverBridge) {
+                this.tweens.add({
+                    targets: this.riverBridge,
+                    alpha: 1,
+                    duration: 800,
+                    ease: "sine.out",
+                });
+                if (this.riverBridge.glow) {
+                    this.tweens.add({
+                        targets: this.riverBridge.glow,
+                        alpha: { from: 0.12, to: 0.48 },
+                        scale: { from: 0.8, to: 1.7 },
+                        duration: 1200,
+                        yoyo: true,
+                        repeat: -1,
+                        ease: "sine.inOut",
+                    });
+                }
+            }
+            gameEvents.emit(
+                "hud:hint",
+                "Four gifts gather. The bridge completes. Walk right and cross."
+            );
+        }
+        this._emitChapter10Progress();
+    }
+
+    _startRiverClosing() {
+        if (this.bridgeDialogueStarted || this.completed) return;
+        this.bridgeDialogueStarted = true;
+        this._afterDialogue = () => this._completeChapter();
+        gameEvents.emit("script:start", { name: "river-closing" });
+    }
+
     _checkChapter1Progress() {
         const allSpoken = this.citizens.every((c) => c.spoken);
         const allPulses = this.pulses.every((p) => p.collected);
@@ -1910,6 +2117,7 @@ export default class ChapterScene extends Phaser.Scene {
         if (this.chapterId === 7) this._emitChapter7Progress();
         if (this.chapterId === 8) this._emitChapter8Progress();
         if (this.chapterId === 9) this._emitChapter9Progress();
+        if (this.chapterId === 10) this._emitChapter10Progress();
         gameEvents.emit("chapter:complete", { chapterId: this.chapterId });
     }
 
@@ -2083,6 +2291,27 @@ export default class ChapterScene extends Phaser.Scene {
             current: Math.min(10, heard + stillness + (shoreReached ? 2 : 0)),
             total: 10,
             phase,
+        });
+    }
+
+    _emitChapter10Progress() {
+        if (!this.riverHelpers) return;
+        const met = this.riverHelpers.filter((h) => h.met).length;
+        const atBridge =
+            this.bridgeOpen && this.riverBridge
+                ? Math.abs(this.riverBridge.x - this.hero.x) < 64
+                : false;
+        gameEvents.emit("chapter:progress", {
+            objective:
+                met < 4 ? "Meet the four helpers along the river." : "Cross the completed bridge.",
+            detail:
+                met < 4
+                    ? "Use Mirror to see what each helper carries, then receive their gift."
+                    : "The helpers have gathered. Walk right to cross the bridge.",
+            label: "helpers",
+            current: met + (atBridge ? 1 : 0),
+            total: 5,
+            phase: this.bridgeOpen ? "Bridge complete" : "Riverbank",
         });
     }
 
@@ -2308,6 +2537,18 @@ export default class ChapterScene extends Phaser.Scene {
             if (!this.completed) this._emitChapter9Progress();
         }
 
+        // Chapter 10: meet helpers, then cross the bridge
+        if (this.chapterId === 10 && canMove) {
+            if (
+                this.bridgeOpen &&
+                this.riverBridge &&
+                Math.abs(this.riverBridge.x - this.hero.x) < 46
+            ) {
+                this._startRiverClosing();
+            }
+            if (!this.completed) this._emitChapter10Progress();
+        }
+
         // Clamp hero position
         this.hero.x = Phaser.Math.Clamp(this.hero.x + vx, 30, W - 30);
         this.hero.y = Phaser.Math.Clamp(
@@ -2348,6 +2589,7 @@ export default class ChapterScene extends Phaser.Scene {
         if (this.chapterId === 7) intensity = 0.035;
         if (this.chapterId === 8) intensity = 0.045;
         if (this.chapterId === 9) intensity = 0.055;
+        if (this.chapterId === 10) intensity = 0.025;
         if (this.chapterId === 3) intensity = 0.03;
         for (let i = 0; i < bands; i++) {
             const y = 80 + i * 65 + Math.sin((this._fogOffset + i * 20) * 0.05) * 6;
