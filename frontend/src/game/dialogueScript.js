@@ -31,8 +31,14 @@ import {
     RIVER_CLOSING_DIALOGUE,
     RIVER_HELPERS,
     RIVER_OPENING_DIALOGUE,
+    RESCUE_CLOSING,
+    RESCUE_DIALOGUE,
+    RESCUE_OPENING,
     SEA_CLOSING_DIALOGUE,
     SEA_OPENING_LINES,
+    THREE_TEST_ARCHES,
+    THREE_TESTS_CLOSING,
+    THREE_TESTS_OPENING,
 } from "@/game/chapters";
 
 // Speaker name -> hidden emotional truth revealed under Mirror Lens
@@ -48,6 +54,7 @@ export const SPEAKER_HIDDEN_LABELS = {
     "The Well": "A chamber learning to answer",
     "The Vastness": "What was never wounded",
     Veer: "What stays when everything else runs",
+    "Younger Self": "Still waiting to be remembered",
 };
 
 export const TARA_CHOICE_BLOCK =
@@ -254,6 +261,36 @@ export function buildScript(payload) {
     }
     if (payload.name === "deep-listen-closing") {
         return DEEP_LISTEN_CLOSING.map(withSpeakerLabel);
+    }
+    if (payload.name === "rescue-opening") {
+        return RESCUE_OPENING.map(withSpeakerLabel);
+    }
+    if (payload.name === "rescue-dialogue") {
+        return RESCUE_DIALOGUE.map(withSpeakerLabel);
+    }
+    if (payload.name === "rescue-closing") {
+        return RESCUE_CLOSING.map(withSpeakerLabel);
+    }
+    if (payload.name === "three-tests-opening") {
+        return THREE_TESTS_OPENING.map(withSpeakerLabel);
+    }
+    if (payload.name === "three-test-arch") {
+        const arch = THREE_TEST_ARCHES.find((x) => x.id === payload.archId);
+        if (!arch) return null;
+        return [
+            {
+                speaker: null,
+                kind: "narration",
+                text: arch.prompt,
+                choice: {
+                    prompt: "Choose how the hero carries what they know.",
+                    options: arch.choices,
+                },
+            },
+        ].map(withSpeakerLabel);
+    }
+    if (payload.name === "three-tests-closing") {
+        return THREE_TESTS_CLOSING.map(withSpeakerLabel);
     }
     if (payload.name === "shadow-dialogue") {
         return [

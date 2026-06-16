@@ -33,6 +33,14 @@ const CHAPTER_AMBIENT = {
     9: "fear",
     10: "road",
     11: "cave",
+    12: "inward",
+    13: "vastness",
+    14: "long-dark",
+    15: "courage",
+    16: "helpers-return",
+    17: "deep-listen",
+    18: "rescue",
+    19: "tests",
 };
 
 export default function GameScreen() {
@@ -137,6 +145,7 @@ export default function GameScreen() {
         if (completedChapterId === 15) return "Courage";
         if (completedChapterId === 16) return "Receiving";
         if (completedChapterId === 17) return "Listening";
+        if (completedChapterId === 18) return "Reclamation";
         return null;
     }, [completedChapterId]);
 

@@ -16,6 +16,8 @@ const CHAPTER_AMBIENT_LABELS = {
     15: "courage",
     16: "helpers-return",
     17: "deep-listen",
+    18: "rescue",
+    19: "tests",
 };
 
 /**
@@ -53,7 +55,7 @@ export default function DevSection({ currentChapterId, onJumpToChapter }) {
                 className="grid grid-cols-5 gap-1"
                 data-testid="settings-dev-chapter-jump"
             >
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17].map((c) => (
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19].map((c) => (
                     <button
                         key={c}
                         onClick={() => onJumpToChapter?.(c)}

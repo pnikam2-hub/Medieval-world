@@ -9,6 +9,7 @@ import {
     LONG_DARK_ECHOES,
     MEMORY_BUOYS,
     RIVER_HELPERS,
+    THREE_TEST_ARCHES,
     TRIAL_FIRES,
 } from "./chapters";
 
@@ -72,6 +73,8 @@ export default class ChapterScene extends Phaser.Scene {
         else if (chapterId === 15) this._setupChapter15();
         else if (chapterId === 16) this._setupChapter16();
         else if (chapterId === 17) this._setupChapter17();
+        else if (chapterId === 18) this._setupChapter18();
+        else if (chapterId === 19) this._setupChapter19();
 
         // Mirror lens toggle from React
         this._onMirror = (active) => {
@@ -114,6 +117,11 @@ export default class ChapterScene extends Phaser.Scene {
         };
         gameEvents.on("trial-fire:choice", this._onTrialFireChoice);
 
+        this._onThreeTestsChoice = (payload) => {
+            if (this.chapterId === 19) this._handleThreeTestsChoice(payload);
+        };
+        gameEvents.on("three-tests:choice", this._onThreeTestsChoice);
+
         // Cleanup
         this.events.once("shutdown", () => {
             gameEvents.off("mirror:toggle", this._onMirror);
@@ -122,6 +130,7 @@ export default class ChapterScene extends Phaser.Scene {
             gameEvents.off("scene:dialogue-lock", this._onLock);
             gameEvents.off("fear:trial-start", this._onFearTrial);
             gameEvents.off("trial-fire:choice", this._onTrialFireChoice);
+            gameEvents.off("three-tests:choice", this._onThreeTestsChoice);
         });
     }
 
@@ -243,6 +252,33 @@ export default class ChapterScene extends Phaser.Scene {
             deep.fillStyle(0x38bdf8, 0.025);
             deep.fillEllipse(W / 2, H * 0.58, W * 0.6, H * 0.42);
             this.bgLayer.add(deep);
+        }
+
+        if ([18].includes(this.chapterId)) {
+            const rescue = this.add.graphics();
+            rescue.fillGradientStyle(0x02030a, 0x040710, 0x0c0a08, 0x010103, 1);
+            rescue.fillRect(0, 0, W, H);
+            rescue.fillStyle(0xfadb5f, 0.028);
+            rescue.fillEllipse(W * 0.52, H - 78, W * 0.9, 96);
+            rescue.lineStyle(1, 0xfadb5f, 0.08);
+            rescue.beginPath();
+            rescue.moveTo(W * 0.18, H - 94);
+            rescue.quadraticCurveTo(W * 0.52, H - 136, W * 0.88, H - 104);
+            rescue.strokePath();
+            this.bgLayer.add(rescue);
+        }
+
+        if ([19].includes(this.chapterId)) {
+            const tests = this.add.graphics();
+            tests.fillGradientStyle(0x070509, 0x0e0a10, 0x160f0a, 0x030303, 1);
+            tests.fillRect(0, 0, W, H);
+            tests.fillStyle(0xfadb5f, 0.035);
+            tests.fillEllipse(W / 2, H * 0.58, W * 0.82, H * 0.52);
+            tests.lineStyle(1, 0xfadb5f, 0.08);
+            for (let i = 0; i < 6; i++) {
+                tests.strokeCircle(W / 2, H - 96, 92 + i * 34);
+            }
+            this.bgLayer.add(tests);
         }
 
         if ([8].includes(this.chapterId)) {
@@ -1737,6 +1773,151 @@ export default class ChapterScene extends Phaser.Scene {
         this._emitChapter17Progress();
     }
 
+    // ------------------------------------------------------------------
+    // Chapter 18: Rescue - return for the younger self
+    // ------------------------------------------------------------------
+    _setupChapter18() {
+        this.rescueDialogueStarted = false;
+        this.rescueWalkingBack = false;
+        this.rescueSlowHintShown = false;
+        this._spawnKavi();
+        this.hero.x = W * 0.18;
+        this.hero.y = H - 112;
+
+        const child = this.add.container(W * 0.88, H - 104);
+        const glow = this.add.circle(0, -25, 24, 0xfadb5f, 0.08);
+        glow.setBlendMode(Phaser.BlendModes.ADD);
+        const body = this.add.graphics();
+        body.fillStyle(0x171717, 0.92);
+        body.fillRoundedRect(-8, -34, 16, 34, 5);
+        body.fillCircle(0, -42, 7);
+        body.lineStyle(1, 0xfadb5f, 0.28);
+        body.lineBetween(-8, -18, 8, -18);
+        const hum = this.add.circle(-12, -28, 3, 0xfadb5f, 0.55);
+        hum.setBlendMode(Phaser.BlendModes.ADD);
+        this.tweens.add({
+            targets: glow,
+            alpha: { from: 0.04, to: 0.22 },
+            scale: { from: 0.8, to: 1.35 },
+            duration: 1800,
+            yoyo: true,
+            repeat: -1,
+            ease: "sine.inOut",
+        });
+        child.add([glow, body, hum]);
+        child.kind = "younger-self";
+        child.rescued = false;
+        child.deeperText =
+            "The part of you that kept believing you would come back.";
+        this._attachMirrorLabels(
+            child,
+            "A child sitting alone",
+            "The self you left in the dark",
+            -66
+        );
+        this.worldLayer.add(child);
+        this.youngerSelf = child;
+
+        this._showNarration(
+            "The deep listening fades. But something remains: a thread, a warmth, a direction."
+        );
+        this._afterDialogue = () => {
+            gameEvents.emit("script:start", { name: "rescue-opening" });
+            this._afterDialogue = () => {
+                gameEvents.emit(
+                    "hud:hint",
+                    "Walk slowly to the small figure at the far end."
+                );
+                this._emitChapter18Progress();
+            };
+        };
+        this._emitChapter18Progress();
+    }
+
+    // ------------------------------------------------------------------
+    // Chapter 19: Three Tests - shame, anger, and power
+    // ------------------------------------------------------------------
+    _setupChapter19() {
+        this.testArches = [];
+        this.threeTestsLightOpen = false;
+        this.threeTestsClosingStarted = false;
+        this._spawnKavi();
+
+        THREE_TEST_ARCHES.forEach((data, idx) => {
+            const arch = this.add.container(W * data.x, H - 96);
+            const halo = this.add.circle(0, -32, 32, 0xfadb5f, 0.05);
+            halo.setBlendMode(Phaser.BlendModes.ADD);
+            const frame = this.add.graphics();
+            const color =
+                data.id === "shame"
+                    ? 0xe2e8f0
+                    : data.id === "anger"
+                      ? 0xfb8500
+                      : 0xfadb5f;
+            frame.lineStyle(2, color, 0.45);
+            frame.strokeRoundedRect(-24, -72, 48, 72, 22);
+            frame.fillStyle(color, 0.035);
+            frame.fillRoundedRect(-24, -72, 48, 72, 22);
+            const sigil = this.add.text(0, -34, String(idx + 1), {
+                fontFamily: "Cormorant Garamond, serif",
+                fontSize: "22px",
+                color: "#fadb5f",
+            });
+            sigil.setOrigin(0.5);
+            arch.add([halo, frame, sigil]);
+            arch.kind = "three-test-arch";
+            arch.archId = data.id;
+            arch.passed = false;
+            arch.deeperText = data.deeperLabel;
+            arch.halo = halo;
+            this._attachMirrorLabels(
+                arch,
+                data.surfaceLabel,
+                data.hiddenLabel,
+                -92
+            );
+            this.tweens.add({
+                targets: halo,
+                alpha: { from: 0.04, to: 0.24 },
+                scale: { from: 0.75, to: 1.35 },
+                duration: 1500 + idx * 180,
+                yoyo: true,
+                repeat: -1,
+                ease: "sine.inOut",
+            });
+            this.worldLayer.add(arch);
+            this.testArches.push(arch);
+        });
+
+        const light = this.add.container(W * 0.5, H - 105);
+        const halo = this.add.circle(0, -22, 44, 0xfadb5f, 0.035);
+        halo.setBlendMode(Phaser.BlendModes.ADD);
+        const core = this.add.circle(0, -22, 7, 0xfadb5f, 0.2);
+        core.setBlendMode(Phaser.BlendModes.ADD);
+        light.add([halo, core]);
+        light.kind = "three-tests-light";
+        light.halo = halo;
+        light.setAlpha(0.25);
+        this._attachMirrorLabels(light, "Quiet center", "The tests held gently", -58);
+        this.worldLayer.add(light);
+        this.threeTestsLight = light;
+
+        this._showNarration(
+            "Three arches wait, not to prove you are changed, but to ask whether you can live differently with what you have named."
+        );
+        this._afterDialogue = () => {
+            gameEvents.emit("script:start", { name: "three-tests-opening" });
+            this._afterDialogue = () => {
+                gameEvents.emit(
+                    "hud:hint",
+                    "Face each arch. Mirror reveals what the test is really asking."
+                );
+                this._emitChapter19Progress();
+            };
+        };
+        this._emitChapter19Progress();
+    }
+
     _spawnKavi() {
         if (this.kaviSpawned) return;
         this.kaviSpawned = true;
@@ -1866,6 +2047,7 @@ export default class ChapterScene extends Phaser.Scene {
             ...(this.longDarkEchoes || []).filter((e) => !e.heard),
             ...(this.courageFears || []).filter((f) => !f.revealed),
             ...(this.returnHelpers || []).filter((h) => !h.received),
+            ...(this.testArches || []).filter((a) => !a.passed),
             this.tara,
             this.mural,
             this.shadowTwin,
@@ -1876,6 +2058,8 @@ export default class ChapterScene extends Phaser.Scene {
             this.riverBridge,
             this.voiceWell,
             this.veer,
+            this.youngerSelf,
+            this.threeTestsLight,
         ].filter(Boolean);
 
         targets.forEach((t) => {
@@ -2092,6 +2276,31 @@ export default class ChapterScene extends Phaser.Scene {
                         label: "Listen",
                     })
                 );
+        } else if (this.chapterId === 18) {
+            if (this.youngerSelf && !this.youngerSelf.rescued) {
+                candidates.push({
+                    target: this.youngerSelf,
+                    range: 78,
+                    label: "Sit beside",
+                });
+            }
+        } else if (this.chapterId === 19) {
+            (this.testArches || [])
+                .filter((a) => !a.passed)
+                .forEach((a) =>
+                    candidates.push({
+                        target: a,
+                        range: 72,
+                        label: "Face test",
+                    })
+                );
+            if (this.threeTestsLightOpen && this.threeTestsLight) {
+                candidates.push({
+                    target: this.threeTestsLight,
+                    range: 64,
+                    label: "Receive light",
+                });
+            }
         }
 
         let nearest = null;
@@ -2203,6 +2412,21 @@ export default class ChapterScene extends Phaser.Scene {
                 named < 4
                     ? "Stand beside an unnamed stone with Mirror on, then press Space."
                     : "The voice well is awake. Speak the names back to it."
+            );
+        } else if (this.chapterId === 18) {
+            gameEvents.emit(
+                "hud:hint",
+                this.rescueWalkingBack
+                    ? "Walk left together. Let the younger self stay beside you."
+                    : "Walk to the small figure at the far right, then press Space."
+            );
+        } else if (this.chapterId === 19) {
+            const passed = this.testArches?.filter((a) => a.passed).length || 0;
+            gameEvents.emit(
+                "hud:hint",
+                passed < 3
+                    ? "Stand beside an unfinished arch and press Space."
+                    : "The quiet center is awake. Step into its light."
             );
         }
     }
@@ -2428,6 +2652,32 @@ export default class ChapterScene extends Phaser.Scene {
                     this._hearDeepListenPulse(pulse);
                     return;
                 }
+            }
+            this._showNoTargetHint();
+        } else if (this.chapterId === 18) {
+            if (
+                this.youngerSelf &&
+                !this.youngerSelf.rescued &&
+                Math.abs(this.youngerSelf.x - this.hero.x) < 78
+            ) {
+                this._startRescueDialogue();
+                return;
+            }
+            this._showNoTargetHint();
+        } else if (this.chapterId === 19) {
+            for (const arch of this.testArches || []) {
+                if (Math.abs(arch.x - this.hero.x) < 72 && !arch.passed) {
+                    this._startThreeTestArch(arch);
+                    return;
+                }
+            }
+            if (
+                this.threeTestsLightOpen &&
+                this.threeTestsLight &&
+                Math.abs(this.threeTestsLight.x - this.hero.x) < 64
+            ) {
+                this._startThreeTestsClosing();
+                return;
             }
             this._showNoTargetHint();
         }
@@ -3055,6 +3305,102 @@ export default class ChapterScene extends Phaser.Scene {
         };
     }
 
+    _startRescueDialogue() {
+        if (this.rescueDialogueStarted || !this.youngerSelf) return;
+        this.rescueDialogueStarted = true;
+        this._revealDeepTruth(this.youngerSelf, this.youngerSelf.deeperText, -94);
+        gameEvents.emit("script:start", { name: "rescue-dialogue" });
+        this._afterDialogue = () => {
+            this.youngerSelf.rescued = true;
+            this.rescueWalkingBack = true;
+            if (this.youngerSelf.surfaceLabel) {
+                this.youngerSelf.surfaceLabel.setText("Walking beside you");
+            }
+            if (this.youngerSelf.hiddenLabel) {
+                this.youngerSelf.hiddenLabel.setText("The self you came back for");
+            }
+            gameEvents.emit("lantern:adjust", 0.05);
+            gameEvents.emit("fx:flicker");
+            this._afterDialogue = () => {
+                gameEvents.emit("hud:hint", "Walk left together. Do not rush.");
+                this._emitChapter18Progress();
+            };
+            gameEvents.emit("script:start", { name: "rescue-closing" });
+        };
+    }
+
+    _startThreeTestArch(arch) {
+        if (!arch || arch.passed || this.dialogueOpen) return;
+        this._revealDeepTruth(arch, arch.deeperText, -116);
+        gameEvents.emit("script:start", {
+            name: "three-test-arch",
+            archId: arch.archId,
+        });
+    }
+
+    _handleThreeTestsChoice(payload) {
+        if (!payload?.accepted) return;
+        const arch = this.testArches?.find((a) => a.archId === payload.archId);
+        if (!arch || arch.passed) return;
+        arch.passed = true;
+        gameEvents.emit("lantern:adjust", 0.035);
+        gameEvents.emit("fx:flicker");
+        if (arch.halo) {
+            this.tweens.add({
+                targets: arch.halo,
+                alpha: { from: 0.18, to: 0.58 },
+                scale: { from: 1, to: 1.9 },
+                duration: 700,
+                yoyo: true,
+                ease: "sine.inOut",
+            });
+        }
+        this.tweens.add({
+            targets: arch,
+            alpha: 0.72,
+            y: arch.y - 5,
+            duration: 420,
+            yoyo: true,
+            ease: "sine.inOut",
+        });
+
+        const passed = this.testArches.filter((a) => a.passed).length;
+        if (passed === this.testArches.length && !this.threeTestsLightOpen) {
+            this.threeTestsLightOpen = true;
+            if (this.threeTestsLight) {
+                this.tweens.add({
+                    targets: this.threeTestsLight,
+                    alpha: 1,
+                    duration: 800,
+                    ease: "sine.out",
+                });
+                if (this.threeTestsLight.halo) {
+                    this.tweens.add({
+                        targets: this.threeTestsLight.halo,
+                        alpha: { from: 0.12, to: 0.55 },
+                        scale: { from: 0.8, to: 1.85 },
+                        duration: 1300,
+                        yoyo: true,
+                        repeat: -1,
+                        ease: "sine.inOut",
+                    });
+                }
+            }
+            gameEvents.emit(
+                "hud:hint",
+                "All three arches have softened. Step into the quiet center."
+            );
+        }
+        this._emitChapter19Progress();
+    }
+
+    _startThreeTestsClosing() {
+        if (this.threeTestsClosingStarted || this.completed) return;
+        this.threeTestsClosingStarted = true;
+        this._afterDialogue = () => this._completeChapter();
+        gameEvents.emit("script:start", { name: "three-tests-closing" });
+    }
+
     _checkChapter1Progress() {
         const allSpoken = this.citizens.every((c) => c.spoken);
         const allPulses = this.pulses.every((p) => p.collected);
@@ -3088,6 +3434,8 @@ export default class ChapterScene extends Phaser.Scene {
         if (this.chapterId === 15) this._emitChapter15Progress();
         if (this.chapterId === 16) this._emitChapter16Progress();
         if (this.chapterId === 17) this._emitChapter17Progress();
+        if (this.chapterId === 18) this._emitChapter18Progress();
+        if (this.chapterId === 19) this._emitChapter19Progress();
         gameEvents.emit("chapter:complete", { chapterId: this.chapterId });
     }
 
@@ -3395,6 +3743,45 @@ export default class ChapterScene extends Phaser.Scene {
             current: heard + (finalReady ? 1 : 0),
             total: DEEP_LISTEN_FRAGMENTS.length + 1,
             phase: finalReady ? "Warm pulse" : "Deep listening",
+        });
+    }
+
+    _emitChapter18Progress() {
+        const rescued = this.youngerSelf?.rescued ? 1 : 0;
+        const returned =
+            this.rescueWalkingBack && this.hero?.x < W * 0.22 ? 1 : 0;
+        gameEvents.emit("chapter:progress", {
+            objective: rescued
+                ? "Walk back with the younger self."
+                : "Find the one who has been waiting.",
+            detail: rescued
+                ? "Move left slowly. The rescue completes when you return together."
+                : "Approach the small figure at the far end, then press Space.",
+            label: "rescue",
+            current: rescued + returned,
+            total: 2,
+            phase: rescued ? "Walking together" : "Far end of the deep",
+        });
+    }
+
+    _emitChapter19Progress() {
+        if (!this.testArches) return;
+        const passed = this.testArches.filter((a) => a.passed).length;
+        const atLight =
+            this.threeTestsLightOpen && this.threeTestsLight
+                ? Math.abs(this.threeTestsLight.x - this.hero.x) < 64
+                : false;
+        gameEvents.emit("chapter:progress", {
+            objective:
+                passed < 3 ? "Pass the three inner tests." : "Receive what remains after testing.",
+            detail:
+                passed < 3
+                    ? "Face shame, anger, and power. Choose the response that lives differently with what you know."
+                    : "The quiet center has opened. Step into its light.",
+            label: "tests",
+            current: passed + (atLight ? 1 : 0),
+            total: 4,
+            phase: this.threeTestsLightOpen ? "Quiet center" : `${passed}/3 arches`,
         });
     }
 
@@ -3743,6 +4130,44 @@ export default class ChapterScene extends Phaser.Scene {
             if (!this.completed) this._emitChapter17Progress();
         }
 
+        // Chapter 18: rescue requires a slow approach and a walk back together
+        if (this.chapterId === 18 && canMove) {
+            if (this.youngerSelf && !this.youngerSelf.rescued) {
+                const dist = Math.abs(this.youngerSelf.x - this.hero.x);
+                if (dist < 155) {
+                    vx *= 0.42;
+                    vy *= 0.42;
+                    if (!this.rescueSlowHintShown) {
+                        this.rescueSlowHintShown = true;
+                        gameEvents.emit(
+                            "hud:hint",
+                            "Slowly. This part does not need to be rushed."
+                        );
+                    }
+                }
+            }
+            if (this.rescueWalkingBack && this.youngerSelf) {
+                this.youngerSelf.x += (this.hero.x - 30 - this.youngerSelf.x) * 0.06;
+                this.youngerSelf.y += (this.hero.y + 4 - this.youngerSelf.y) * 0.05;
+                if (this.hero.x < W * 0.18 && !this.completed) {
+                    this._completeChapter();
+                }
+            }
+            if (!this.completed) this._emitChapter18Progress();
+        }
+
+        // Chapter 19: complete after all arches pass and the center is entered
+        if (this.chapterId === 19 && canMove) {
+            if (
+                this.threeTestsLightOpen &&
+                this.threeTestsLight &&
+                Math.abs(this.threeTestsLight.x - this.hero.x) < 46
+            ) {
+                this._startThreeTestsClosing();
+            }
+            if (!this.completed) this._emitChapter19Progress();
+        }
+
         // Clamp hero position
         this.hero.x = Phaser.Math.Clamp(this.hero.x + vx, 30, W - 30);
         this.hero.y = Phaser.Math.Clamp(
@@ -3791,6 +4216,8 @@ export default class ChapterScene extends Phaser.Scene {
         if (this.chapterId === 15) intensity = 0.04;
         if (this.chapterId === 16) intensity = 0.022;
         if (this.chapterId === 17) intensity = 0.018;
+        if (this.chapterId === 18) intensity = 0.026;
+        if (this.chapterId === 19) intensity = 0.036;
         if (this.chapterId === 3) intensity = 0.03;
         for (let i = 0; i < bands; i++) {
             const y = 80 + i * 65 + Math.sin((this._fogOffset + i * 20) * 0.05) * 6;

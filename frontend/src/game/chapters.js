@@ -234,8 +234,34 @@ export const CHAPTERS = [
             "When have you felt truly heard, not agreed with or fixed, just heard, and what did that hearing make possible?",
         helperLine: "It was hearing you the whole time. - Kavi",
     },
-    { id: 18, title: "Rescue", subtitle: "What the heart remembers", unlocked: false, kind: "locked" },
-    { id: 19, title: "Tests", subtitle: "Shame, anger, power", unlocked: false, kind: "locked" },
+    {
+        id: 18,
+        title: "Rescue",
+        subtitle: "What the heart remembers",
+        unlocked: true,
+        kind: "explore",
+        narration:
+            "At the far end of the deep, a small figure sits with their back turned, still waiting.",
+        endText:
+            "Rescue is not pulling someone from the dark. It is walking into the dark, sitting beside them, and saying: I remember now.",
+        journalQuestion:
+            "What younger part of yourself did you leave behind to become strong, and what would you say if you walked back now?",
+        helperLine: "The lantern is warmer now. Not brighter. Warmer. - Kavi",
+    },
+    {
+        id: 19,
+        title: "Three Tests",
+        subtitle: "Shame, anger, power",
+        unlocked: true,
+        kind: "threshold",
+        narration:
+            "Three arches wait, not to prove you are changed, but to ask whether you can live differently with what you have named.",
+        endText:
+            "You are not tested by what you can endure. You are revealed by how you hold what you already know.",
+        journalQuestion:
+            "What truth about yourself have you acknowledged but not yet lived differently, and what would one small change look like?",
+        helperLine: "That is the whole journey. Staying differently. - Kavi",
+    },
     { id: 20, title: "Magical Flight", subtitle: "Rising on the breath of helpers", unlocked: false, kind: "locked" },
     { id: 21, title: "Dragon Battle", subtitle: "The Dragon of Forgetting", unlocked: false, kind: "locked" },
     { id: 22, title: "Return", subtitle: "Carrying light back to dust", unlocked: false, kind: "locked" },
@@ -1133,4 +1159,165 @@ export const DEEP_LISTEN_CLOSING = [
         text: "All those years I thought I was alone in the silence. I was not. I just could not hear the listener.",
     },
     { speaker: "Kavi", text: "Now you can. That changes things. That changes everything." },
+];
+
+export const RESCUE_OPENING = [
+    {
+        speaker: null,
+        kind: "narration",
+        text: "The deep listening fades. But something remains: a thread, a warmth, a direction.",
+    },
+    { speaker: null, kind: "narration", text: "At the far end of the deep, a figure sits. Small. Still. Waiting." },
+    { speaker: "Kavi", text: "Is that... is that you?" },
+    { speaker: "You", text: "It is who I was. Before I learned to name the stones. Before the lantern was full." },
+];
+
+export const RESCUE_DIALOGUE = [
+    { speaker: "Younger Self", text: "You came back. I did not think you would come back." },
+    { speaker: "You", text: "I did not know you were here. I did not know you were waiting." },
+    { speaker: "Younger Self", text: "Where else would I be? You left me here. When it was too much. When you had to be strong." },
+    { speaker: "You", text: "I am sorry. I did not know that being strong meant leaving you behind." },
+    { speaker: "Younger Self", text: "I kept humming. Did you hear me? Sometimes, in the quiet, I would hum the old song." },
+    { speaker: "You", text: "The echo. In the long dark. That was you." },
+    { speaker: "Younger Self", text: "I have been humming for a very long time." },
+    { speaker: "You", text: "Will you walk with me now? Not ahead. Not behind. Beside." },
+    { speaker: "Younger Self", text: "You will not leave again?" },
+    { speaker: "You", text: "I know how to come back now. I know the way." },
+    { speaker: "Younger Self", text: "Then I will walk. But slowly. I have not walked in a long time." },
+];
+
+export const RESCUE_CLOSING = [
+    { speaker: "Kavi", text: "They are walking with us. Is this what rescue feels like?" },
+    { speaker: "You", text: "It feels like remembering that they were never the part that needed to be left behind." },
+    { speaker: "Kavi", text: "I think the lantern is warmer now. Not brighter. Warmer." },
+];
+
+export const THREE_TESTS_OPENING = [
+    {
+        speaker: null,
+        kind: "narration",
+        text: "Three arches. Three tests. Not to prove yourself, but to see if you can live differently with what you have named.",
+    },
+    { speaker: "Kavi", text: "Tests. I remember tests. The fires on the road. But these feel different. Closer." },
+    { speaker: "You", text: "The fires tested what I would do for others. These test what I will do with myself." },
+    { speaker: "Kavi", text: "Then I will stay close. Just so you know someone is watching who already believes in you." },
+];
+
+export const THREE_TEST_ARCHES = [
+    {
+        id: "shame",
+        x: 0.22,
+        title: "Shame",
+        surfaceLabel: "First arch",
+        hiddenLabel: "Where shame waits to see if you still believe it",
+        deeperLabel: "Shame is the voice of someone who hurt you, internalized. You can give it back.",
+        prompt: "The pale mirror says: If they knew, they would leave.",
+        choices: [
+            {
+                id: "believe-shame",
+                tag: "Old Voice",
+                text: "Believe it.",
+                outcome: "The arch chills. Kavi stays close, refusing to agree with the old voice.",
+                outcomeSpeaker: null,
+                kind: "narration",
+                lantern: -0.02,
+                advance: false,
+                retryText: "The shame-voice repeats itself. Name what is speaking.",
+            },
+            {
+                id: "name-shame",
+                tag: "Voice",
+                text: "Name it as shame speaking.",
+                outcome: "The mirror softens. You know this voice now. It does not get to drive anymore.",
+                outcomeSpeaker: null,
+                kind: "narration",
+                lantern: 0.04,
+                advance: true,
+                event: { name: "three-tests:choice", payload: { archId: "shame", accepted: true } },
+            },
+        ],
+    },
+    {
+        id: "anger",
+        x: 0.5,
+        title: "Anger",
+        surfaceLabel: "Second arch",
+        hiddenLabel: "Where anger waits to be heard instead of silenced",
+        deeperLabel: "Anger is not the enemy. Unheard anger is the enemy. Heard anger becomes clarity.",
+        prompt: "The red arch asks whether anger can speak without being exiled.",
+        choices: [
+            {
+                id: "quiet-anger",
+                tag: "Control",
+                text: "Shut it down. Anger is dangerous.",
+                outcome: "The fire folds inward. Kavi whispers: You named it. Now listen.",
+                outcomeSpeaker: null,
+                kind: "narration",
+                lantern: -0.02,
+                advance: false,
+                retryText: "The anger waits, still burning, still trying to protect something.",
+            },
+            {
+                id: "hear-anger",
+                tag: "Courage",
+                text: "Let it speak. What do you need to say?",
+                outcome: "Anger becomes boundary. It says no where you were once too small to say it.",
+                outcomeSpeaker: null,
+                kind: "narration",
+                lantern: 0.04,
+                advance: true,
+                event: { name: "three-tests:choice", payload: { archId: "anger", accepted: true } },
+            },
+        ],
+    },
+    {
+        id: "power",
+        x: 0.78,
+        title: "Power",
+        surfaceLabel: "Third arch",
+        hiddenLabel: "Where power asks what you will do with it",
+        deeperLabel: "Power is not a weapon. It is a lantern. It can illuminate or it can blind.",
+        prompt: "The bright arch asks what you will do with voice, courage, and clarity.",
+        choices: [
+            {
+                id: "be-right",
+                tag: "Fear",
+                text: "Use them to be right.",
+                outcome: "The image hardens. Kavi says: Power that needs to be right is fear wearing a crown.",
+                outcomeSpeaker: null,
+                kind: "narration",
+                lantern: -0.03,
+                advance: false,
+                retryText: "The bright image waits for a gentler use of strength.",
+            },
+            {
+                id: "stay-small",
+                tag: "Safety",
+                text: "Stay small. It is safer.",
+                outcome: "The image shrinks. Kavi says: You did not come this far to disappear.",
+                outcomeSpeaker: null,
+                kind: "narration",
+                lantern: -0.02,
+                advance: false,
+                retryText: "The arch asks again: not smaller, just gentler.",
+            },
+            {
+                id: "help-see",
+                tag: "Clarity",
+                text: "Use them to help others see.",
+                outcome: "The image becomes human-sized and warm. Power becomes a lantern, not a crown.",
+                outcomeSpeaker: null,
+                kind: "narration",
+                lantern: 0.05,
+                advance: true,
+                event: { name: "three-tests:choice", payload: { archId: "power", accepted: true } },
+            },
+        ],
+    },
+];
+
+export const THREE_TESTS_CLOSING = [
+    { speaker: "Kavi", text: "You passed. Not perfectly, but you passed. The shame, the anger, the power. You looked at all of them." },
+    { speaker: "You", text: "I did not conquer them. I just stayed with them differently." },
+    { speaker: "Kavi", text: "That is the whole thing. The whole journey. Staying differently." },
 ];
