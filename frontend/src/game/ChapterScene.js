@@ -3,11 +3,14 @@ import { gameEvents } from "./events";
 import {
     COURAGE_FEAR_OBJECTS,
     DEEP_LISTEN_FRAGMENTS,
+    DRAGON_MEMORIES,
+    FLIGHT_CURRENTS,
     HELPER_RETURN_GIFTS,
     INWARD_THRESHOLD_MARKERS,
     INITIATION_STONES,
     LONG_DARK_ECHOES,
     MEMORY_BUOYS,
+    RETURN_CITIZENS,
     RIVER_HELPERS,
     THREE_TEST_ARCHES,
     TRIAL_FIRES,
@@ -75,6 +78,10 @@ export default class ChapterScene extends Phaser.Scene {
         else if (chapterId === 17) this._setupChapter17();
         else if (chapterId === 18) this._setupChapter18();
         else if (chapterId === 19) this._setupChapter19();
+        else if (chapterId === 20) this._setupChapter20();
+        else if (chapterId === 21) this._setupChapter21();
+        else if (chapterId === 22) this._setupChapter22();
+        else if (chapterId === 23) this._setupChapter23();
 
         // Mirror lens toggle from React
         this._onMirror = (active) => {
@@ -279,6 +286,60 @@ export default class ChapterScene extends Phaser.Scene {
                 tests.strokeCircle(W / 2, H - 96, 92 + i * 34);
             }
             this.bgLayer.add(tests);
+        }
+
+        if ([20].includes(this.chapterId)) {
+            const sky = this.add.graphics();
+            sky.fillGradientStyle(0x04111f, 0x09203a, 0x301508, 0x050505, 1);
+            sky.fillRect(0, 0, W, H);
+            sky.fillStyle(0xfadb5f, 0.045);
+            sky.fillEllipse(W * 0.5, H * 0.56, W * 0.9, H * 0.34);
+            sky.lineStyle(1, 0xe2e8f0, 0.12);
+            for (let i = 0; i < 8; i++) {
+                const y = 90 + i * 42;
+                sky.beginPath();
+                sky.moveTo(0, y);
+                sky.quadraticCurveTo(W * 0.5, y - 34, W, y + 12);
+                sky.strokePath();
+            }
+            this.bgLayer.add(sky);
+        }
+
+        if ([21].includes(this.chapterId)) {
+            const dragonDark = this.add.graphics();
+            dragonDark.fillGradientStyle(0x010103, 0x08030a, 0x1b0805, 0x010101, 1);
+            dragonDark.fillRect(0, 0, W, H);
+            dragonDark.fillStyle(0xfb8500, 0.035);
+            dragonDark.fillEllipse(W * 0.74, H * 0.48, W * 0.46, H * 0.54);
+            dragonDark.lineStyle(1, 0xfb8500, 0.1);
+            for (let i = 0; i < 7; i++) {
+                dragonDark.strokeCircle(W * 0.74, H * 0.47, 50 + i * 28);
+            }
+            this.bgLayer.add(dragonDark);
+        }
+
+        if ([22].includes(this.chapterId)) {
+            const city = this.add.graphics();
+            city.fillGradientStyle(0x16110b, 0x1f160c, 0x0a0a0a, 0x050505, 1);
+            city.fillRect(0, 0, W, H);
+            city.fillStyle(0x201a13, 1);
+            for (let i = 0; i < 12; i++) {
+                city.fillRect(i * 84 - 20, H - 210 - (i % 3) * 18, 58, 150 + (i % 4) * 24);
+            }
+            city.fillStyle(0xfadb5f, 0.04);
+            city.fillEllipse(W * 0.5, H - 80, W * 0.95, 90);
+            this.bgLayer.add(city);
+        }
+
+        if ([23].includes(this.chapterId)) {
+            const center = this.add.graphics();
+            center.fillGradientStyle(0x050505, 0x140f08, 0x2a1b06, 0x070707, 1);
+            center.fillRect(0, 0, W, H);
+            center.fillStyle(0xfadb5f, 0.08);
+            center.fillEllipse(W / 2, H * 0.54, W * 0.65, H * 0.5);
+            center.lineStyle(1, 0xfadb5f, 0.12);
+            for (let i = 0; i < 8; i++) center.strokeCircle(W / 2, H - 104, 58 + i * 36);
+            this.bgLayer.add(center);
         }
 
         if ([8].includes(this.chapterId)) {
@@ -1918,6 +1979,225 @@ export default class ChapterScene extends Phaser.Scene {
         this._emitChapter19Progress();
     }
 
+    // ------------------------------------------------------------------
+    // Chapter 20: Magical Flight - gather four helper currents
+    // ------------------------------------------------------------------
+    _setupChapter20() {
+        this.flightCurrents = [];
+        this.flightGateOpen = false;
+        this.flightClosingStarted = false;
+        this._spawnKavi();
+        this.hero.x = W * 0.12;
+        this.hero.y = H * 0.58;
+
+        FLIGHT_CURRENTS.forEach((data, idx) => {
+            const current = this.add.container(W * data.x, H * data.y);
+            const ring = this.add.circle(0, 0, 24, data.color, 0.06);
+            ring.setStrokeStyle(1, data.color, 0.55);
+            ring.setBlendMode(Phaser.BlendModes.ADD);
+            const core = this.add.circle(0, 0, 6, data.color, 0.8);
+            core.setBlendMode(Phaser.BlendModes.ADD);
+            this.tweens.add({
+                targets: ring,
+                alpha: { from: 0.06, to: 0.35 },
+                scale: { from: 0.7, to: 1.7 },
+                duration: 1500 + idx * 170,
+                yoyo: true,
+                repeat: -1,
+                ease: "sine.inOut",
+            });
+            current.add([ring, core]);
+            current.kind = "flight-current";
+            current.currentId = data.id;
+            current.collected = false;
+            current.color = data.color;
+            this._attachMirrorLabels(current, data.surfaceLabel, data.hiddenLabel, -36);
+            this.worldLayer.add(current);
+            this.flightCurrents.push(current);
+        });
+
+        const gate = this.add.container(W * 0.93, H * 0.42);
+        const halo = this.add.circle(0, 0, 38, 0xfadb5f, 0.04);
+        halo.setBlendMode(Phaser.BlendModes.ADD);
+        const star = this.add.graphics();
+        star.lineStyle(2, 0xfadb5f, 0.45);
+        star.strokeTriangle(-24, 16, 24, 16, 0, -26);
+        star.strokeTriangle(-24, -16, 24, -16, 0, 26);
+        gate.add([halo, star]);
+        gate.kind = "flight-gate";
+        gate.halo = halo;
+        gate.setAlpha(0.28);
+        this._attachMirrorLabels(gate, "High opening", "The path home through air", -48);
+        this.worldLayer.add(gate);
+        this.flightGate = gate;
+
+        this._showNarration(
+            "The quiet center opens upward. The helpers' gifts become wind under the lantern."
+        );
+        this._afterDialogue = () => {
+            gameEvents.emit("script:start", { name: "flight-opening" });
+            this._afterDialogue = () => {
+                gameEvents.emit("hud:hint", "Fly through each helper current, then enter the high opening.");
+                this._emitChapter20Progress();
+            };
+        };
+        this._emitChapter20Progress();
+    }
+
+    // ------------------------------------------------------------------
+    // Chapter 21: Dragon Battle - remember what cannot be erased
+    // ------------------------------------------------------------------
+    _setupChapter21() {
+        this.dragonMemories = [];
+        this.dragonVulnerable = false;
+        this.dragonClosingStarted = false;
+        this._spawnKavi();
+
+        const dragon = this.add.container(W * 0.82, H - 130);
+        const aura = this.add.circle(0, -26, 72, 0xfb8500, 0.08);
+        aura.setBlendMode(Phaser.BlendModes.ADD);
+        const body = this.add.graphics();
+        body.fillStyle(0x1a0505, 0.94);
+        body.fillEllipse(0, -28, 100, 54);
+        body.fillTriangle(-20, -52, 46, -58, 16, -30);
+        body.fillTriangle(-38, -34, -90, -70, -56, -18);
+        body.fillStyle(0xfb8500, 0.92);
+        body.fillCircle(28, -42, 4);
+        body.lineStyle(1, 0xfb8500, 0.5);
+        body.lineBetween(40, -36, 72, -30);
+        dragon.add([aura, body]);
+        dragon.kind = "dragon";
+        dragon.halo = aura;
+        this._attachMirrorLabels(dragon, "Dragon", "Forgetting with teeth", -94);
+        this.worldLayer.add(dragon);
+        this.dragon = dragon;
+
+        DRAGON_MEMORIES.forEach((data, idx) => {
+            const memory = this.add.container(W * data.x, H - 86 - (idx % 2) * 38);
+            const halo = this.add.circle(0, 0, 20, 0xfadb5f, 0.08);
+            halo.setBlendMode(Phaser.BlendModes.ADD);
+            const core = this.add.graphics();
+            core.fillStyle(0xfadb5f, 0.72);
+            core.fillPoints(
+                [
+                    { x: 0, y: -11 },
+                    { x: 11, y: 0 },
+                    { x: 0, y: 11 },
+                    { x: -11, y: 0 },
+                ],
+                true
+            );
+            memory.add([halo, core]);
+            memory.kind = "dragon-memory";
+            memory.memoryId = data.id;
+            memory.collected = false;
+            this._attachMirrorLabels(memory, data.surfaceLabel, data.hiddenLabel, -38);
+            this.tweens.add({
+                targets: halo,
+                alpha: { from: 0.06, to: 0.34 },
+                scale: { from: 0.8, to: 1.55 },
+                duration: 1400 + idx * 150,
+                yoyo: true,
+                repeat: -1,
+                ease: "sine.inOut",
+            });
+            this.worldLayer.add(memory);
+            this.dragonMemories.push(memory);
+        });
+
+        this._showNarration(
+            "At the highest dark, the Dragon of Forgetting waits with a mouth full of old names."
+        );
+        this._afterDialogue = () => {
+            gameEvents.emit("script:start", { name: "dragon-opening" });
+            this._afterDialogue = () => {
+                gameEvents.emit("hud:hint", "Collect four true memories, then face the dragon.");
+                this._emitChapter21Progress();
+            };
+        };
+        this._emitChapter21Progress();
+    }
+
+    // ------------------------------------------------------------------
+    // Chapter 22: Return - bring light back to the City of Dust
+    // ------------------------------------------------------------------
+    _setupChapter22() {
+        this.returnCitizens = [];
+        this.cityCenterOpen = false;
+        this.returnClosingStarted = false;
+        this._spawnKavi();
+
+        RETURN_CITIZENS.forEach((data) => {
+            const citizen = this._makeNpc(W * data.x, H - 110, "Citizen", {
+                surfaceLabel: data.surfaceLabel,
+                hiddenLabel: data.hiddenLabel,
+            });
+            citizen.kind = "return-citizen";
+            citizen.citizenId = data.id;
+            citizen.heard = false;
+            this.worldLayer.add(citizen);
+            this.returnCitizens.push(citizen);
+        });
+
+        const center = this.add.container(W * 0.92, H - 110);
+        const halo = this.add.circle(0, -24, 36, 0xfadb5f, 0.04);
+        halo.setBlendMode(Phaser.BlendModes.ADD);
+        const gate = this.add.graphics();
+        gate.lineStyle(2, 0xfadb5f, 0.42);
+        gate.strokeRoundedRect(-24, -62, 48, 62, 8);
+        center.add([halo, gate]);
+        center.kind = "city-center";
+        center.halo = halo;
+        center.setAlpha(0.3);
+        this._attachMirrorLabels(center, "City center", "Where the treasure waits", -76);
+        this.worldLayer.add(center);
+        this.cityCenter = center;
+
+        this._showNarration(
+            "The road bends back to the City of Dust. Nothing has changed. Everything has changed."
+        );
+        this._afterDialogue = () => {
+            gameEvents.emit("script:start", { name: "return-opening" });
+            this._afterDialogue = () => {
+                gameEvents.emit("hud:hint", "Speak with the three citizens, then return to the center.");
+                this._emitChapter22Progress();
+            };
+        };
+        this._emitChapter22Progress();
+    }
+
+    // ------------------------------------------------------------------
+    // Chapter 23: Treasure - the awakened heart
+    // ------------------------------------------------------------------
+    _setupChapter23() {
+        this._spawnKavi();
+        this.hero.x = W * 0.5;
+        this.hero.y = H - 112;
+        if (this.heroLanternHalo) {
+            this.tweens.add({
+                targets: this.heroLanternHalo,
+                alpha: { from: 0.22, to: 0.68 },
+                scale: { from: 1.2, to: 3.2 },
+                duration: 2400,
+                yoyo: true,
+                repeat: -1,
+                ease: "sine.inOut",
+            });
+        }
+        gameEvents.emit("chapter:progress", {
+            objective: "Receive the treasure.",
+            detail: "Advance the final dialogue and let the awakened heart speak.",
+            label: "heart",
+            current: 1,
+            total: 1,
+            phase: "Awakened heart",
+        });
+        this.time.delayedCall(600, () => {
+            this._afterDialogue = () => this._completeChapter();
+            gameEvents.emit("script:start", { name: "treasure-dialogue" });
+        });
+    }
+
     _spawnKavi() {
         if (this.kaviSpawned) return;
         this.kaviSpawned = true;
@@ -2048,6 +2328,9 @@ export default class ChapterScene extends Phaser.Scene {
             ...(this.courageFears || []).filter((f) => !f.revealed),
             ...(this.returnHelpers || []).filter((h) => !h.received),
             ...(this.testArches || []).filter((a) => !a.passed),
+            ...(this.flightCurrents || []).filter((c) => !c.collected),
+            ...(this.dragonMemories || []).filter((m) => !m.collected),
+            ...(this.returnCitizens || []).filter((c) => !c.heard),
             this.tara,
             this.mural,
             this.shadowTwin,
@@ -2060,6 +2343,9 @@ export default class ChapterScene extends Phaser.Scene {
             this.veer,
             this.youngerSelf,
             this.threeTestsLight,
+            this.flightGate,
+            this.dragon,
+            this.cityCenter,
         ].filter(Boolean);
 
         targets.forEach((t) => {
@@ -2301,13 +2587,66 @@ export default class ChapterScene extends Phaser.Scene {
                     label: "Receive light",
                 });
             }
+        } else if (this.chapterId === 20) {
+            (this.flightCurrents || [])
+                .filter((c) => !c.collected)
+                .forEach((c) =>
+                    candidates.push({
+                        target: c,
+                        range: 68,
+                        label: "Catch current",
+                    })
+                );
+            if (this.flightGateOpen && this.flightGate) {
+                candidates.push({
+                    target: this.flightGate,
+                    range: 72,
+                    label: "Enter opening",
+                });
+            }
+        } else if (this.chapterId === 21) {
+            (this.dragonMemories || [])
+                .filter((m) => !m.collected)
+                .forEach((m) =>
+                    candidates.push({
+                        target: m,
+                        range: 66,
+                        label: "Remember",
+                    })
+                );
+            if (this.dragonVulnerable && this.dragon) {
+                candidates.push({
+                    target: this.dragon,
+                    range: 86,
+                    label: "Face dragon",
+                });
+            }
+        } else if (this.chapterId === 22) {
+            (this.returnCitizens || [])
+                .filter((c) => !c.heard)
+                .forEach((c) =>
+                    candidates.push({
+                        target: c,
+                        range: 66,
+                        label: "Offer light",
+                    })
+                );
+            if (this.cityCenterOpen && this.cityCenter) {
+                candidates.push({
+                    target: this.cityCenter,
+                    range: 66,
+                    label: "Return center",
+                });
+            }
         }
 
         let nearest = null;
         for (const c of candidates) {
             const dist = Math.abs(c.target.x - this.hero.x);
-            if (dist <= c.range && (!nearest || dist < nearest.dist)) {
-                nearest = { ...c, dist };
+            const yDist = Math.abs((c.target.y || this.hero.y) - this.hero.y);
+            const score = this.chapterId === 20 ? Math.hypot(dist, yDist) : dist;
+            if (score <= c.range && (!nearest || score < nearest.dist)) {
+                nearest = { ...c, dist: score };
             }
         }
         return nearest;
@@ -2427,6 +2766,30 @@ export default class ChapterScene extends Phaser.Scene {
                 passed < 3
                     ? "Stand beside an unfinished arch and press Space."
                     : "The quiet center is awake. Step into its light."
+            );
+        } else if (this.chapterId === 20) {
+            const collected = this.flightCurrents?.filter((c) => c.collected).length || 0;
+            gameEvents.emit(
+                "hud:hint",
+                collected < 4
+                    ? "Catch the four helper currents. They sit at different heights."
+                    : "The high opening is awake. Fly into it."
+            );
+        } else if (this.chapterId === 21) {
+            const collected = this.dragonMemories?.filter((m) => m.collected).length || 0;
+            gameEvents.emit(
+                "hud:hint",
+                collected < 4
+                    ? "Collect true memories before facing the dragon."
+                    : "The dragon has loosened. Stand near it and press Space."
+            );
+        } else if (this.chapterId === 22) {
+            const heard = this.returnCitizens?.filter((c) => c.heard).length || 0;
+            gameEvents.emit(
+                "hud:hint",
+                heard < 3
+                    ? "Offer light to the three citizens."
+                    : "The city center is open. Return there."
             );
         }
     }
@@ -2677,6 +3040,59 @@ export default class ChapterScene extends Phaser.Scene {
                 Math.abs(this.threeTestsLight.x - this.hero.x) < 64
             ) {
                 this._startThreeTestsClosing();
+                return;
+            }
+            this._showNoTargetHint();
+        } else if (this.chapterId === 20) {
+            for (const current of this.flightCurrents || []) {
+                const dist = Math.hypot(current.x - this.hero.x, current.y - this.hero.y);
+                if (dist < 68 && !current.collected) {
+                    this._collectFlightCurrent(current);
+                    return;
+                }
+            }
+            if (
+                this.flightGateOpen &&
+                this.flightGate &&
+                Math.hypot(this.flightGate.x - this.hero.x, this.flightGate.y - this.hero.y) < 72
+            ) {
+                this._startFlightClosing();
+                return;
+            }
+            this._showNoTargetHint();
+        } else if (this.chapterId === 21) {
+            for (const memory of this.dragonMemories || []) {
+                if (Math.abs(memory.x - this.hero.x) < 66 && !memory.collected) {
+                    this._collectDragonMemory(memory);
+                    return;
+                }
+            }
+            if (
+                this.dragonVulnerable &&
+                this.dragon &&
+                Math.abs(this.dragon.x - this.hero.x) < 86
+            ) {
+                this._startDragonClosing();
+                return;
+            }
+            this._showNoTargetHint();
+        } else if (this.chapterId === 22) {
+            for (const citizen of this.returnCitizens || []) {
+                if (Math.abs(citizen.x - this.hero.x) < 66 && !citizen.heard) {
+                    gameEvents.emit("script:start", {
+                        name: "return-citizen",
+                        citizenId: citizen.citizenId,
+                    });
+                    this._afterDialogue = () => this._completeReturnCitizen(citizen);
+                    return;
+                }
+            }
+            if (
+                this.cityCenterOpen &&
+                this.cityCenter &&
+                Math.abs(this.cityCenter.x - this.hero.x) < 66
+            ) {
+                this._startReturnClosing();
                 return;
             }
             this._showNoTargetHint();
@@ -3401,6 +3817,158 @@ export default class ChapterScene extends Phaser.Scene {
         gameEvents.emit("script:start", { name: "three-tests-closing" });
     }
 
+    _collectFlightCurrent(current) {
+        if (!current || current.collected) return;
+        current.collected = true;
+        gameEvents.emit("lantern:adjust", 0.035);
+        gameEvents.emit("fx:flicker");
+        gameEvents.emit("script:start", {
+            name: "flight-current",
+            currentId: current.currentId,
+        });
+        this.tweens.add({
+            targets: current,
+            alpha: 0.28,
+            scale: 0.65,
+            duration: 600,
+            ease: "sine.out",
+        });
+        this._afterDialogue = () => {
+            const collected = this.flightCurrents.filter((c) => c.collected).length;
+            if (collected === this.flightCurrents.length) this._openFlightGate();
+            this._emitChapter20Progress();
+        };
+    }
+
+    _openFlightGate() {
+        if (this.flightGateOpen) return;
+        this.flightGateOpen = true;
+        if (this.flightGate) {
+            this.tweens.add({
+                targets: this.flightGate,
+                alpha: 1,
+                duration: 800,
+                ease: "sine.out",
+            });
+            if (this.flightGate.halo) {
+                this.tweens.add({
+                    targets: this.flightGate.halo,
+                    alpha: { from: 0.12, to: 0.62 },
+                    scale: { from: 0.8, to: 1.9 },
+                    duration: 1200,
+                    yoyo: true,
+                    repeat: -1,
+                    ease: "sine.inOut",
+                });
+            }
+        }
+        gameEvents.emit("hud:hint", "The high opening is awake. Fly into it.");
+    }
+
+    _startFlightClosing() {
+        if (this.flightClosingStarted || this.completed) return;
+        this.flightClosingStarted = true;
+        this._afterDialogue = () => this._completeChapter();
+        gameEvents.emit("script:start", { name: "flight-closing" });
+    }
+
+    _collectDragonMemory(memory) {
+        if (!memory || memory.collected) return;
+        memory.collected = true;
+        gameEvents.emit("lantern:adjust", 0.035);
+        gameEvents.emit("fx:flicker");
+        gameEvents.emit("script:start", {
+            name: "dragon-memory",
+            memoryId: memory.memoryId,
+        });
+        this.tweens.add({
+            targets: memory,
+            alpha: 0,
+            scale: 0.3,
+            duration: 800,
+            ease: "sine.inOut",
+            onComplete: () => memory.destroy(),
+        });
+        this._afterDialogue = () => {
+            const collected = this.dragonMemories.filter((m) => m.collected).length;
+            if (collected === this.dragonMemories.length) this._weakenDragon();
+            this._emitChapter21Progress();
+        };
+    }
+
+    _weakenDragon() {
+        if (this.dragonVulnerable) return;
+        this.dragonVulnerable = true;
+        if (this.dragon?.halo) {
+            this.tweens.add({
+                targets: this.dragon.halo,
+                alpha: { from: 0.08, to: 0.35 },
+                scale: { from: 1, to: 1.45 },
+                duration: 900,
+                yoyo: true,
+                repeat: -1,
+                ease: "sine.inOut",
+            });
+        }
+        gameEvents.emit(
+            "hud:hint",
+            "The dragon has loosened. Stand near it and remember aloud."
+        );
+    }
+
+    _startDragonClosing() {
+        if (this.dragonClosingStarted || this.completed) return;
+        this.dragonClosingStarted = true;
+        this._afterDialogue = () => this._completeChapter();
+        gameEvents.emit("script:start", { name: "dragon-closing" });
+    }
+
+    _completeReturnCitizen(citizen) {
+        if (!citizen || citizen.heard) return;
+        citizen.heard = true;
+        gameEvents.emit("lantern:adjust", 0.04);
+        gameEvents.emit("fx:flicker");
+        this.tweens.add({
+            targets: citizen,
+            y: citizen.y - 6,
+            duration: 340,
+            yoyo: true,
+            ease: "sine.inOut",
+        });
+        const heard = this.returnCitizens.filter((c) => c.heard).length;
+        if (heard === this.returnCitizens.length && !this.cityCenterOpen) {
+            this.cityCenterOpen = true;
+            if (this.cityCenter) {
+                this.tweens.add({
+                    targets: this.cityCenter,
+                    alpha: 1,
+                    duration: 800,
+                    ease: "sine.out",
+                });
+                if (this.cityCenter.halo) {
+                    this.tweens.add({
+                        targets: this.cityCenter.halo,
+                        alpha: { from: 0.12, to: 0.55 },
+                        scale: { from: 0.8, to: 1.85 },
+                        duration: 1200,
+                        yoyo: true,
+                        repeat: -1,
+                        ease: "sine.inOut",
+                    });
+                }
+            }
+            gameEvents.emit("hud:hint", "The city center is open. Return there.");
+        }
+        this._emitChapter22Progress();
+    }
+
+    _startReturnClosing() {
+        if (this.returnClosingStarted || this.completed) return;
+        this.returnClosingStarted = true;
+        this._afterDialogue = () => this._completeChapter();
+        gameEvents.emit("script:start", { name: "return-closing" });
+    }
+
     _checkChapter1Progress() {
         const allSpoken = this.citizens.every((c) => c.spoken);
         const allPulses = this.pulses.every((p) => p.collected);
@@ -3436,6 +4004,9 @@ export default class ChapterScene extends Phaser.Scene {
         if (this.chapterId === 17) this._emitChapter17Progress();
         if (this.chapterId === 18) this._emitChapter18Progress();
         if (this.chapterId === 19) this._emitChapter19Progress();
+        if (this.chapterId === 20) this._emitChapter20Progress();
+        if (this.chapterId === 21) this._emitChapter21Progress();
+        if (this.chapterId === 22) this._emitChapter22Progress();
         gameEvents.emit("chapter:complete", { chapterId: this.chapterId });
     }
 
@@ -3785,6 +4356,69 @@ export default class ChapterScene extends Phaser.Scene {
         });
     }
 
+    _emitChapter20Progress() {
+        if (!this.flightCurrents) return;
+        const collected = this.flightCurrents.filter((c) => c.collected).length;
+        const atGate =
+            this.flightGateOpen && this.flightGate
+                ? Math.hypot(this.flightGate.x - this.hero.x, this.flightGate.y - this.hero.y) < 72
+                : false;
+        gameEvents.emit("chapter:progress", {
+            objective:
+                collected < 4 ? "Catch the four helper currents." : "Enter the high opening.",
+            detail:
+                collected < 4
+                    ? "Move freely through the sky. Each current carries one helper's gift."
+                    : "The currents have gathered into flight. Enter the opening at the far right.",
+            label: "currents",
+            current: collected + (atGate ? 1 : 0),
+            total: 5,
+            phase: this.flightGateOpen ? "High opening" : "Magical flight",
+        });
+    }
+
+    _emitChapter21Progress() {
+        if (!this.dragonMemories) return;
+        const collected = this.dragonMemories.filter((m) => m.collected).length;
+        const atDragon =
+            this.dragonVulnerable && this.dragon
+                ? Math.abs(this.dragon.x - this.hero.x) < 86
+                : false;
+        gameEvents.emit("chapter:progress", {
+            objective:
+                collected < 4 ? "Remember what the dragon cannot erase." : "Face the Dragon of Forgetting.",
+            detail:
+                collected < 4
+                    ? "Collect four true memories before approaching the dragon."
+                    : "The dragon has loosened. Stand beside it and press Space.",
+            label: "memories",
+            current: collected + (atDragon ? 1 : 0),
+            total: 5,
+            phase: this.dragonVulnerable ? "Dragon loosened" : "Highest dark",
+        });
+    }
+
+    _emitChapter22Progress() {
+        if (!this.returnCitizens) return;
+        const heard = this.returnCitizens.filter((c) => c.heard).length;
+        const atCenter =
+            this.cityCenterOpen && this.cityCenter
+                ? Math.abs(this.cityCenter.x - this.hero.x) < 66
+                : false;
+        gameEvents.emit("chapter:progress", {
+            objective:
+                heard < 3 ? "Offer light to the City of Dust." : "Return to the city center.",
+            detail:
+                heard < 3
+                    ? "Speak with three citizens. Mirror reveals what the city still hides."
+                    : "The center has opened. Carry the lantern home.",
+            label: "citizens",
+            current: heard + (atCenter ? 1 : 0),
+            total: 4,
+            phase: this.cityCenterOpen ? "City center" : "Returning",
+        });
+    }
+
     _isBreathInhale() {
         const period = this.breathPeriod || 4;
         const phase = ((this.breathT || 0) % period) / period;
@@ -3855,7 +4489,7 @@ export default class ChapterScene extends Phaser.Scene {
         const canMove =
             !this.dialogueOpen &&
             !this.completed &&
-            !(this.chapterId === 3 || this.chapterId === 13); // dialogue only chapters
+            !(this.chapterId === 3 || this.chapterId === 13 || this.chapterId === 23); // dialogue only chapters
 
         if (canMove) {
             if (leftDown) vx -= 1;
@@ -4168,13 +4802,48 @@ export default class ChapterScene extends Phaser.Scene {
             if (!this.completed) this._emitChapter19Progress();
         }
 
+        // Chapter 20: flight lets the hero move vertically through the upper field
+        if (this.chapterId === 20 && canMove) {
+            vx *= 0.9;
+            vy *= 0.9;
+            if (
+                this.flightGateOpen &&
+                this.flightGate &&
+                Math.hypot(this.flightGate.x - this.hero.x, this.flightGate.y - this.hero.y) < 48
+            ) {
+                this._startFlightClosing();
+            }
+            if (!this.completed) this._emitChapter20Progress();
+        }
+
+        // Chapter 21: memory weakens the dragon before direct confrontation
+        if (this.chapterId === 21 && canMove) {
+            if (
+                this.dragonVulnerable &&
+                this.dragon &&
+                Math.abs(this.dragon.x - this.hero.x) < 58
+            ) {
+                this._startDragonClosing();
+            }
+            if (!this.completed) this._emitChapter21Progress();
+        }
+
+        // Chapter 22: return light to citizens, then return to the center
+        if (this.chapterId === 22 && canMove) {
+            if (
+                this.cityCenterOpen &&
+                this.cityCenter &&
+                Math.abs(this.cityCenter.x - this.hero.x) < 48
+            ) {
+                this._startReturnClosing();
+            }
+            if (!this.completed) this._emitChapter22Progress();
+        }
+
         // Clamp hero position
         this.hero.x = Phaser.Math.Clamp(this.hero.x + vx, 30, W - 30);
-        this.hero.y = Phaser.Math.Clamp(
-            this.hero.y + vy,
-            H - 180,
-            H - 70
-        );
+        const minY = this.chapterId === 20 ? 80 : H - 180;
+        this.hero.y = Phaser.Math.Clamp(this.hero.y + vy, minY, H - 70);
 
         // Hero facing
         if (vx > 0.05) this.hero.heading = "right";
@@ -4218,6 +4887,10 @@ export default class ChapterScene extends Phaser.Scene {
         if (this.chapterId === 17) intensity = 0.018;
         if (this.chapterId === 18) intensity = 0.026;
         if (this.chapterId === 19) intensity = 0.036;
+        if (this.chapterId === 20) intensity = 0.018;
+        if (this.chapterId === 21) intensity = 0.055;
+        if (this.chapterId === 22) intensity = 0.045;
+        if (this.chapterId === 23) intensity = 0.02;
         if (this.chapterId === 3) intensity = 0.03;
         for (let i = 0; i < bands; i++) {
             const y = 80 + i * 65 + Math.sin((this._fogOffset + i * 20) * 0.05) * 6;

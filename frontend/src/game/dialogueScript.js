@@ -7,6 +7,12 @@ import {
     DEEP_LISTEN_CLOSING,
     DEEP_LISTEN_FRAGMENTS,
     DEEP_LISTEN_OPENING,
+    DRAGON_CLOSING,
+    DRAGON_MEMORIES,
+    DRAGON_OPENING,
+    FLIGHT_CLOSING,
+    FLIGHT_CURRENTS,
+    FLIGHT_OPENING,
     HELPER_RETURN_GIFTS,
     HELPERS_RETURN_CLOSING,
     HELPERS_RETURN_OPENING,
@@ -34,11 +40,15 @@ import {
     RESCUE_CLOSING,
     RESCUE_DIALOGUE,
     RESCUE_OPENING,
+    RETURN_CITIZENS,
+    RETURN_CLOSING,
+    RETURN_OPENING,
     SEA_CLOSING_DIALOGUE,
     SEA_OPENING_LINES,
     THREE_TEST_ARCHES,
     THREE_TESTS_CLOSING,
     THREE_TESTS_OPENING,
+    TREASURE_DIALOGUE,
 } from "@/game/chapters";
 
 // Speaker name -> hidden emotional truth revealed under Mirror Lens
@@ -55,6 +65,7 @@ export const SPEAKER_HIDDEN_LABELS = {
     "The Vastness": "What was never wounded",
     Veer: "What stays when everything else runs",
     "Younger Self": "Still waiting to be remembered",
+    Dragon: "Forgetting with teeth",
 };
 
 export const TARA_CHOICE_BLOCK =
@@ -291,6 +302,54 @@ export function buildScript(payload) {
     }
     if (payload.name === "three-tests-closing") {
         return THREE_TESTS_CLOSING.map(withSpeakerLabel);
+    }
+    if (payload.name === "flight-opening") {
+        return FLIGHT_OPENING.map(withSpeakerLabel);
+    }
+    if (payload.name === "flight-current") {
+        const current = FLIGHT_CURRENTS.find((x) => x.id === payload.currentId);
+        if (!current) return null;
+        return [{ speaker: null, kind: "narration", text: current.line }].map(
+            withSpeakerLabel
+        );
+    }
+    if (payload.name === "flight-closing") {
+        return FLIGHT_CLOSING.map(withSpeakerLabel);
+    }
+    if (payload.name === "dragon-opening") {
+        return DRAGON_OPENING.map(withSpeakerLabel);
+    }
+    if (payload.name === "dragon-memory") {
+        const memory = DRAGON_MEMORIES.find((x) => x.id === payload.memoryId);
+        if (!memory) return null;
+        return [{ speaker: null, kind: "narration", text: memory.line }].map(
+            withSpeakerLabel
+        );
+    }
+    if (payload.name === "dragon-closing") {
+        return DRAGON_CLOSING.map(withSpeakerLabel);
+    }
+    if (payload.name === "return-opening") {
+        return RETURN_OPENING.map(withSpeakerLabel);
+    }
+    if (payload.name === "return-citizen") {
+        const citizen = RETURN_CITIZENS.find((x) => x.id === payload.citizenId);
+        if (!citizen) return null;
+        return [
+            {
+                speaker: "Citizen",
+                hiddenLabel: citizen.hiddenLabel,
+                text: citizen.surface,
+            },
+            { speaker: "You", text: citizen.response },
+            { speaker: null, kind: "narration", text: citizen.blessing },
+        ].map(withSpeakerLabel);
+    }
+    if (payload.name === "return-closing") {
+        return RETURN_CLOSING.map(withSpeakerLabel);
+    }
+    if (payload.name === "treasure-dialogue") {
+        return TREASURE_DIALOGUE.map(withSpeakerLabel);
     }
     if (payload.name === "shadow-dialogue") {
         return [

@@ -262,10 +262,62 @@ export const CHAPTERS = [
             "What truth about yourself have you acknowledged but not yet lived differently, and what would one small change look like?",
         helperLine: "That is the whole journey. Staying differently. - Kavi",
     },
-    { id: 20, title: "Magical Flight", subtitle: "Rising on the breath of helpers", unlocked: false, kind: "locked" },
-    { id: 21, title: "Dragon Battle", subtitle: "The Dragon of Forgetting", unlocked: false, kind: "locked" },
-    { id: 22, title: "Return", subtitle: "Carrying light back to dust", unlocked: false, kind: "locked" },
-    { id: 23, title: "Treasure", subtitle: "The awakened heart", unlocked: false, kind: "locked" },
+    {
+        id: 20,
+        title: "Magical Flight",
+        subtitle: "Rising on the breath of helpers",
+        unlocked: true,
+        kind: "flight",
+        narration:
+            "The quiet center opens upward. The helpers' gifts become wind under the lantern.",
+        endText:
+            "Flight is not escape. It is what happens when what once weighed you down becomes wings.",
+        journalQuestion:
+            "What old weight in you is ready to become movement rather than burden?",
+        helperLine: "We are flying. I am pretending this was always my plan. - Kavi",
+    },
+    {
+        id: 21,
+        title: "Dragon Battle",
+        subtitle: "The Dragon of Forgetting",
+        unlocked: true,
+        kind: "dragon",
+        narration:
+            "At the highest dark, the Dragon of Forgetting waits with a mouth full of old names.",
+        endText:
+            "The dragon was never defeated by force. It loosened when you remembered what it could not erase.",
+        journalQuestion:
+            "What truth about yourself must you remember when fear tries to rename you?",
+        helperLine: "It cannot eat what you keep remembering together. - Kavi",
+    },
+    {
+        id: 22,
+        title: "Return",
+        subtitle: "Carrying light back to dust",
+        unlocked: true,
+        kind: "return",
+        narration:
+            "The road bends back to the City of Dust. Nothing has changed. Everything has changed.",
+        endText:
+            "Return is not going back as you were. It is carrying what you found into the place that forgot it.",
+        journalQuestion:
+            "Where in ordinary life are you being asked to return with more light than you had before?",
+        helperLine: "The city looks the same. You do not. That matters. - Kavi",
+    },
+    {
+        id: 23,
+        title: "Treasure",
+        subtitle: "The awakened heart",
+        unlocked: true,
+        kind: "finale",
+        narration:
+            "At the center of the city, the treasure waits where it has always been: inside the heart that learned to see.",
+        endText:
+            "The treasure was never outside the hero. The treasure was the awakened heart, already present but forgotten.",
+        journalQuestion:
+            "What treasure has this journey helped you remember was already alive in you?",
+        helperLine: "I knew it. Mostly. With only a few doubts. - Kavi",
+    },
 ];
 
 // Citizen NPC dialogue for Chapter 1. Mirror Lens reveals hidden truth.
@@ -1320,4 +1372,150 @@ export const THREE_TESTS_CLOSING = [
     { speaker: "Kavi", text: "You passed. Not perfectly, but you passed. The shame, the anger, the power. You looked at all of them." },
     { speaker: "You", text: "I did not conquer them. I just stayed with them differently." },
     { speaker: "Kavi", text: "That is the whole thing. The whole journey. Staying differently." },
+];
+
+export const FLIGHT_CURRENTS = [
+    {
+        id: "remembering",
+        x: 0.22,
+        y: 0.62,
+        color: 0xfadb5f,
+        surfaceLabel: "Asha's current",
+        hiddenLabel: "Remembering lifts",
+        line: "Asha's gift rises under you: one true memory, held like a wing.",
+    },
+    {
+        id: "listening",
+        x: 0.42,
+        y: 0.38,
+        color: 0x38bdf8,
+        surfaceLabel: "Nadi's current",
+        hiddenLabel: "Listening steers",
+        line: "Nadi's gift turns the wind into a voice you can follow.",
+    },
+    {
+        id: "warmth",
+        x: 0.62,
+        y: 0.58,
+        color: 0xfb8500,
+        surfaceLabel: "Soma's current",
+        hiddenLabel: "Warmth protects",
+        line: "Soma's fire keeps the height from becoming cold.",
+    },
+    {
+        id: "bridge",
+        x: 0.82,
+        y: 0.34,
+        color: 0xe2e8f0,
+        surfaceLabel: "Rhea's current",
+        hiddenLabel: "The unseen bridge holds",
+        line: "Rhea's bridge appears under your feet only after you trust the next step.",
+    },
+];
+
+export const FLIGHT_OPENING = [
+    { speaker: null, kind: "narration", text: "The quiet center opens upward. The helpers' gifts become wind." },
+    { speaker: "Kavi", text: "I have an important question. Are hearts supposed to fly?" },
+    { speaker: "You", text: "Maybe only when they stop trying to carry everything alone." },
+];
+
+export const FLIGHT_CLOSING = [
+    { speaker: "Kavi", text: "The road is gone below us. But I can still feel every step." },
+    { speaker: "You", text: "Nothing was wasted. Even the heavy parts knew how to become wings." },
+];
+
+export const DRAGON_MEMORIES = [
+    {
+        id: "name",
+        x: 0.18,
+        surfaceLabel: "A true name",
+        hiddenLabel: "I am not what fear called me",
+        line: "The first memory answers: you have a name deeper than fear.",
+    },
+    {
+        id: "child",
+        x: 0.36,
+        surfaceLabel: "A small hand",
+        hiddenLabel: "The rescued self walks with me",
+        line: "The second memory answers: the child was not abandoned.",
+    },
+    {
+        id: "helpers",
+        x: 0.58,
+        surfaceLabel: "Four gifts",
+        hiddenLabel: "I was helped and I helped back",
+        line: "The third memory answers: no true journey was walked alone.",
+    },
+    {
+        id: "listening",
+        x: 0.76,
+        surfaceLabel: "The deep hum",
+        hiddenLabel: "I was heard before I could speak",
+        line: "The fourth memory answers: the listening never left.",
+    },
+];
+
+export const DRAGON_OPENING = [
+    { speaker: null, kind: "narration", text: "At the highest dark, the Dragon of Forgetting waits with a mouth full of old names." },
+    { speaker: "Dragon", text: "You are tired. Put the lantern down. Forget the road. Forget the child. Forget the helpers." },
+    { speaker: "Kavi", text: "Absolutely not. We spent a long time remembering those." },
+    { speaker: "You", text: "Then we remember again." },
+];
+
+export const DRAGON_CLOSING = [
+    { speaker: "Dragon", text: "If you remember, I cannot keep you." },
+    { speaker: "You", text: "Then let go." },
+    { speaker: null, kind: "narration", text: "The dragon opens its mouth, and every stolen name returns as light." },
+    { speaker: "Kavi", text: "That was terrifying. Also beautiful. Mostly terrifying. But beautiful." },
+];
+
+export const RETURN_CITIZENS = [
+    {
+        id: "worker",
+        x: 0.26,
+        surfaceLabel: "Still fine",
+        hiddenLabel: "Afraid to stop",
+        surface: "Everything is still fine. That is what we say here.",
+        response: "You do not have to say it with me. You can breathe first.",
+        blessing: "The citizen exhales. The dust around their feet remembers color.",
+    },
+    {
+        id: "guard",
+        x: 0.52,
+        surfaceLabel: "Keep order",
+        hiddenLabel: "Afraid of tenderness",
+        surface: "A city survives by not feeling too much.",
+        response: "A city survives when someone is allowed to feel enough.",
+        blessing: "The guard lowers their hand. The gate behind them softens.",
+    },
+    {
+        id: "child",
+        x: 0.76,
+        surfaceLabel: "Small watcher",
+        hiddenLabel: "Still able to wonder",
+        surface: "Did you bring something back?",
+        response: "Yes. But it was also here. We only forgot where to look.",
+        blessing: "The child smiles first. Then the city remembers how.",
+    },
+];
+
+export const RETURN_OPENING = [
+    { speaker: null, kind: "narration", text: "The road bends back to the City of Dust. Nothing has changed. Everything has changed." },
+    { speaker: "Kavi", text: "It is strange. The streets look the same, but the silence does not." },
+    { speaker: "You", text: "Maybe the silence was waiting for someone to return with an answer." },
+];
+
+export const RETURN_CLOSING = [
+    { speaker: "Kavi", text: "The city is breathing." },
+    { speaker: "You", text: "It was always able to. It just needed one lantern to remember the way." },
+];
+
+export const TREASURE_DIALOGUE = [
+    { speaker: null, kind: "narration", text: "At the center of the city, the treasure waits where it has always been." },
+    { speaker: "Kavi", text: "I do not see a chest. Or a crown. Or even a suspiciously shiny box." },
+    { speaker: "You", text: "No. It is smaller than that." },
+    { speaker: null, kind: "narration", text: "The chest-lantern opens. Inside is not gold, but the heart that survived forgetting." },
+    { speaker: "Kavi", text: "Oh. That is much better than a box." },
+    { speaker: "You", text: "The treasure was the awakened heart." },
+    { speaker: null, kind: "narration", text: "And because it remembers itself, the whole world becomes a little easier to remember." },
 ];

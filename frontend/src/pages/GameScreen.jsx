@@ -41,6 +41,10 @@ const CHAPTER_AMBIENT = {
     17: "deep-listen",
     18: "rescue",
     19: "tests",
+    20: "flight",
+    21: "dragon",
+    22: "return",
+    23: "treasure",
 };
 
 export default function GameScreen() {
@@ -146,6 +150,10 @@ export default function GameScreen() {
         if (completedChapterId === 16) return "Receiving";
         if (completedChapterId === 17) return "Listening";
         if (completedChapterId === 18) return "Reclamation";
+        if (completedChapterId === 20) return "Flight";
+        if (completedChapterId === 21) return "Remembrance";
+        if (completedChapterId === 22) return "Returning";
+        if (completedChapterId === 23) return "Awakened Heart";
         return null;
     }, [completedChapterId]);
 
