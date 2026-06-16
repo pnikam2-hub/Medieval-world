@@ -3,6 +3,7 @@ import {
     INITIATION_CLOSING_DIALOGUE,
     INITIATION_OPENING_DIALOGUE,
     INITIATION_STONES,
+    INITIATION_WELL_DIALOGUE,
     KAVI_DIALOGUE,
     MURAL_DIALOGUE,
     SHADOW_DIALOGUE,
@@ -29,6 +30,7 @@ export const SPEAKER_HIDDEN_LABELS = {
     Nadi: "Listens beneath the current",
     Soma: "Keeps fire through fear",
     Rhea: "Builds what was once burned",
+    "The Well": "A chamber learning to answer",
 };
 
 export const TARA_CHOICE_BLOCK =
@@ -165,10 +167,16 @@ export function buildScript(payload) {
                 kind: "narration",
                 text: `(The chamber names it) ${stone.line}`,
             },
+            {
+                speaker: "Kavi",
+                text: stone.kaviLine,
+            },
         ];
     }
     if (payload.name === "initiation-closing") {
-        return INITIATION_CLOSING_DIALOGUE.map(withSpeakerLabel);
+        return [...INITIATION_WELL_DIALOGUE, ...INITIATION_CLOSING_DIALOGUE].map(
+            withSpeakerLabel
+        );
     }
     if (payload.name === "shadow-dialogue") {
         return [

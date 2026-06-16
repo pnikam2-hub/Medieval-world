@@ -1223,7 +1223,7 @@ export default class ChapterScene extends Phaser.Scene {
     }
 
     // ------------------------------------------------------------------
-    // Chapter 11: Initiation - name the unspoken
+    // Chapter 11: The Chamber of Stones - name what the light has been keeping
     // ------------------------------------------------------------------
     _setupChapter11() {
         this.initiationStones = [];
@@ -1235,10 +1235,22 @@ export default class ChapterScene extends Phaser.Scene {
         INITIATION_STONES.forEach((data, idx) => {
             const stone = this.add.container(W * data.x, H - 96);
             const slab = this.add.graphics();
-            slab.fillStyle(0x1f1b24, 0.95);
-            slab.fillRoundedRect(-18, -42, 36, 42, 5);
-            slab.lineStyle(1, 0xfadb5f, 0.28);
-            slab.strokeRoundedRect(-18, -42, 36, 42, 5);
+            slab.fillStyle(data.color || 0x1f1b24, 0.72);
+            slab.fillRoundedRect(
+                -data.width / 2,
+                -data.height,
+                data.width,
+                data.height,
+                6
+            );
+            slab.lineStyle(1, 0xfadb5f, 0.32);
+            slab.strokeRoundedRect(
+                -data.width / 2,
+                -data.height,
+                data.width,
+                data.height,
+                6
+            );
             const rune = this.add.text(0, -24, String(idx + 1), {
                 fontFamily: "Cormorant Garamond, serif",
                 fontSize: "18px",
@@ -1252,12 +1264,13 @@ export default class ChapterScene extends Phaser.Scene {
             stone.stoneId = data.id;
             stone.named = false;
             stone.glow = glow;
+            stone.deeperText = data.deeperLabel;
             this._attachMirrorLabels(stone, data.surfaceLabel, data.hiddenLabel, -54);
             this.worldLayer.add(stone);
             this.initiationStones.push(stone);
         });
 
-        const well = this.add.container(W * 0.9, H - 98);
+        const well = this.add.container(W * 0.5, H - 98);
         const bowl = this.add.graphics();
         bowl.fillStyle(0x0f172a, 0.75);
         bowl.fillEllipse(0, 0, 72, 28);
@@ -1274,7 +1287,7 @@ export default class ChapterScene extends Phaser.Scene {
         this.voiceWell = well;
 
         this._showNarration(
-            "Past the bridge waits a chamber with no doors, only names that were never spoken aloud."
+            "The lantern is full now. It does not need more light. But light that is full becomes a room."
         );
         this._afterDialogue = () => {
             gameEvents.emit("script:start", { name: "initiation-opening" });
@@ -1282,7 +1295,7 @@ export default class ChapterScene extends Phaser.Scene {
                 this._emitChapter11Progress();
                 gameEvents.emit(
                     "hud:hint",
-                    "Use Mirror beside each stone, then press Space to name what waits there."
+                    "Name the four stones with the Mirror Lens."
                 );
             };
         };
@@ -2235,8 +2248,9 @@ export default class ChapterScene extends Phaser.Scene {
     _collectInitiationStone(stone) {
         if (!stone || stone.named) return;
         stone.named = true;
-        gameEvents.emit("lantern:adjust", 0.055);
+        gameEvents.emit("lantern:adjust", 0.02);
         gameEvents.emit("fx:flicker");
+        this._revealDeepTruth(stone, stone.deeperText, -78);
         if (stone.glow) {
             this.tweens.add({
                 targets: stone.glow,
@@ -2526,10 +2540,12 @@ export default class ChapterScene extends Phaser.Scene {
                 : false;
         gameEvents.emit("chapter:progress", {
             objective:
-                named < 4 ? "Name what has waited unspoken." : "Speak the names into the well.",
+                named < 4
+                    ? "Name the four stones with the Mirror Lens."
+                    : "Speak the names into the Well.",
             detail:
                 named < 4
-                    ? "Use Mirror beside each stone, then press Space to hear and name it."
+                    ? "Each stone has a surface story and a hidden name. Use Mirror, then press Space."
                     : "The well is awake. Stand beside it and press Space.",
             label: "names",
             current: named + (atWell ? 1 : 0),

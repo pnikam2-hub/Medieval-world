@@ -138,17 +138,17 @@ export const CHAPTERS = [
     },
     {
         id: 11,
-        title: "Initiation",
-        subtitle: "Naming the unspoken",
+        title: "The Chamber of Stones",
+        subtitle: "What the light has been keeping",
         unlocked: true,
         kind: "initiation",
         narration:
-            "Past the bridge waits a chamber with no doors, only names that were never spoken aloud.",
+            "The lantern is full now. It does not need more light. It has become a room for what waited without a name.",
         endText:
-            "What is named is no longer alone in the dark. A true name becomes a handhold.",
+            "What is named is no longer alone in the dark. A true name is not a verdict. It is a handhold.",
         journalQuestion:
-            "What have you avoided naming, and what might change if you spoke it gently?",
-        helperLine: "A true name is not a chain. It is a doorway. - Asha",
+            "What have you been keeping company with in silence, and what might shift if you spoke its name gently, just once?",
+        helperLine: "A true name is not a chain. It is a doorway. - Kavi",
     },
     { id: 12, title: "Threshold Crossing", subtitle: "The inward turn", unlocked: false, kind: "locked" },
     { id: 13, title: "Apotheosis", subtitle: "Brief moment of vastness", unlocked: false, kind: "locked" },
@@ -602,43 +602,107 @@ export const RIVER_CLOSING_DIALOGUE = [
 export const INITIATION_STONES = [
     {
         id: "grief",
-        x: 0.24,
-        surfaceLabel: "Old silence",
-        hiddenLabel: "Grief asking to be named",
+        x: 0.2,
+        color: 0x7f8ea3,
+        width: 42,
+        height: 34,
+        surfaceLabel: "This is old. I am fine now.",
+        hiddenLabel: "I still miss them. Every quiet morning.",
+        deeperLabel: "Not missing less - missing differently.",
         line: "I am grief. I am not here to end the journey. I am here because love mattered.",
+        kaviLine: "...Loss leaves a shape. That shape is still here.",
+        offering: "Grief, I name you. You are not alone in the dark.",
     },
     {
         id: "anger",
-        x: 0.42,
-        surfaceLabel: "Hot stone",
-        hiddenLabel: "Anger guarding a boundary",
+        x: 0.4,
+        color: 0x8a3f2b,
+        width: 34,
+        height: 48,
+        surfaceLabel: "It does not bother me anymore.",
+        hiddenLabel: "It still burns. I just stopped feeding it words.",
+        deeperLabel: "The fire was trying to protect something.",
         line: "I am anger. I became loud when something precious was crossed.",
+        kaviLine: "Anger that old... it has been guarding something. Maybe you.",
+        offering: "Anger, I name you. I see what you were protecting.",
     },
     {
         id: "shame",
         x: 0.6,
-        surfaceLabel: "Low shadow",
-        hiddenLabel: "Shame hiding a wish to belong",
+        color: 0xc9c2b8,
+        width: 30,
+        height: 32,
+        surfaceLabel: "That was a long time ago.",
+        hiddenLabel: "I still flinch when I remember. I still hide it.",
+        deeperLabel: "I was a person who did not know what I know now.",
         line: "I am shame. I learned to shrink before anyone could send me away.",
+        kaviLine: "The flinch. I have seen it. I did not know it had a name.",
+        offering: "Shame, I name you. You are what I survived, not what I am.",
     },
     {
         id: "longing",
-        x: 0.78,
-        surfaceLabel: "Faint song",
-        hiddenLabel: "Longing remembering the way home",
+        x: 0.8,
+        color: 0xd59b45,
+        width: 44,
+        height: 44,
+        surfaceLabel: "I have moved on.",
+        hiddenLabel: "I still reach for it in sleep. I still turn my head.",
+        deeperLabel: "What I long for is the self I was before I lost it.",
         line: "I am longing. I point toward what the heart still knows is possible.",
+        kaviLine: "Longing is not broken wanting. It is remembering in the dark.",
+        offering: "Longing, I name you. You are the shape of something that mattered.",
     },
 ];
 
 export const INITIATION_OPENING_DIALOGUE = [
-    { speaker: "Asha", text: "This chamber does not ask you to conquer anything." },
-    { speaker: "You", text: "Then what does it want?" },
-    { speaker: "Asha", text: "Names. Speak what has been waiting without a name." },
+    {
+        speaker: null,
+        kind: "narration",
+        text: "Four stones. Four names the dark was keeping for you. Not to judge. To sit beside.",
+    },
+    {
+        speaker: "Kavi",
+        text: "This place... it is not outside, is it? It was in the lantern the whole time.",
+    },
+    {
+        speaker: "You",
+        text: "I think the lantern was just keeping it safe until I was ready.",
+    },
+    { speaker: "Kavi", text: "Then I am glad I am here. Someone should be." },
+];
+
+export const INITIATION_WELL_DIALOGUE = [
+    {
+        speaker: "The Well",
+        text: "Speak them. Not to me - to the ones who have been waiting.",
+    },
+    ...INITIATION_STONES.map((stone) => ({
+        speaker: "You",
+        text: "The name rises to your mouth.",
+        choice: {
+            prompt: "Speak into the well",
+            options: [
+                {
+                    id: `offer-${stone.id}`,
+                    tag: "Voice",
+                    text: stone.offering,
+                    outcome: `${stone.offering} The ${stone.id} stone answers with a quiet chime.`,
+                    outcomeSpeaker: null,
+                    kind: "narration",
+                    lantern: 0.02,
+                    advance: true,
+                },
+            ],
+        },
+    })),
 ];
 
 export const INITIATION_CLOSING_DIALOGUE = [
-    { speaker: "You", text: "Grief. Anger. Shame. Longing." },
-    { speaker: "Asha", text: "Now they can answer when called, instead of ruling from the dark." },
-    { speaker: "Kavi", text: "That felt frightening. Also... lighter." },
-    { speaker: "You", text: "Maybe naming is how the light finds the room." },
+    {
+        speaker: "The Well",
+        text: "...They have been waiting a long time. They did not know if you would come.",
+    },
+    { speaker: "You", text: "I did not know if I could." },
+    { speaker: "The Well", text: "And yet." },
+    { speaker: "Kavi", text: "...And yet." },
 ];

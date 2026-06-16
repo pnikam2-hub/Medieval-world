@@ -132,7 +132,7 @@ export default function GameScreen() {
         if (completedChapterId === 8) return "Tenderness";
         if (completedChapterId === 9) return "Stillness";
         if (completedChapterId === 10) return "Connection";
-        if (completedChapterId === 11) return "Voice";
+        if (completedChapterId === 11) return "Voice (Speaking the Unspoken)";
         return null;
     }, [completedChapterId]);
 
