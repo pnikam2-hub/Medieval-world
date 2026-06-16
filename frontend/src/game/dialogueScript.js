@@ -1,5 +1,8 @@
 import {
     CITIZENS,
+    INITIATION_CLOSING_DIALOGUE,
+    INITIATION_OPENING_DIALOGUE,
+    INITIATION_STONES,
     KAVI_DIALOGUE,
     MURAL_DIALOGUE,
     SHADOW_DIALOGUE,
@@ -149,6 +152,23 @@ export function buildScript(payload) {
     }
     if (payload.name === "river-closing") {
         return RIVER_CLOSING_DIALOGUE.map(withSpeakerLabel);
+    }
+    if (payload.name === "initiation-opening") {
+        return INITIATION_OPENING_DIALOGUE.map(withSpeakerLabel);
+    }
+    if (payload.name === "initiation-stone") {
+        const stone = INITIATION_STONES.find((x) => x.id === payload.stoneId);
+        if (!stone) return null;
+        return [
+            {
+                speaker: null,
+                kind: "narration",
+                text: `(The chamber names it) ${stone.line}`,
+            },
+        ];
+    }
+    if (payload.name === "initiation-closing") {
+        return INITIATION_CLOSING_DIALOGUE.map(withSpeakerLabel);
     }
     if (payload.name === "shadow-dialogue") {
         return [

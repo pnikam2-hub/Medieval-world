@@ -1,6 +1,11 @@
 import Phaser from "phaser";
 import { gameEvents } from "./events";
-import { MEMORY_BUOYS, RIVER_HELPERS, TRIAL_FIRES } from "./chapters";
+import {
+    INITIATION_STONES,
+    MEMORY_BUOYS,
+    RIVER_HELPERS,
+    TRIAL_FIRES,
+} from "./chapters";
 
 const W = 960;
 const H = 540;
@@ -55,6 +60,7 @@ export default class ChapterScene extends Phaser.Scene {
         else if (chapterId === 8) this._setupChapter8();
         else if (chapterId === 9) this._setupChapter9();
         else if (chapterId === 10) this._setupChapter10();
+        else if (chapterId === 11) this._setupChapter11();
 
         // Mirror lens toggle from React
         this._onMirror = (active) => {
@@ -193,6 +199,19 @@ export default class ChapterScene extends Phaser.Scene {
                 });
                 this.bgLayer.add(sparkle);
             }
+        }
+
+        if ([11].includes(this.chapterId)) {
+            const chamber = this.add.graphics();
+            chamber.fillGradientStyle(0x07060a, 0x0c0a12, 0x17111b, 0x050505, 1);
+            chamber.fillRect(0, 0, W, H);
+            chamber.fillStyle(0xfadb5f, 0.035);
+            chamber.fillEllipse(W / 2, H * 0.58, W * 0.72, H * 0.52);
+            chamber.lineStyle(1, 0xfadb5f, 0.08);
+            for (let i = 0; i < 7; i++) {
+                chamber.strokeCircle(W / 2, H - 94, 70 + i * 34);
+            }
+            this.bgLayer.add(chamber);
         }
 
         if ([3].includes(this.chapterId)) {
@@ -1203,6 +1222,73 @@ export default class ChapterScene extends Phaser.Scene {
         this._emitChapter10Progress();
     }
 
+    // ------------------------------------------------------------------
+    // Chapter 11: Initiation - name the unspoken
+    // ------------------------------------------------------------------
+    _setupChapter11() {
+        this.initiationStones = [];
+        this.voiceWellOpen = false;
+        this.initiationClosingStarted = false;
+
+        this._spawnKavi();
+
+        INITIATION_STONES.forEach((data, idx) => {
+            const stone = this.add.container(W * data.x, H - 96);
+            const slab = this.add.graphics();
+            slab.fillStyle(0x1f1b24, 0.95);
+            slab.fillRoundedRect(-18, -42, 36, 42, 5);
+            slab.lineStyle(1, 0xfadb5f, 0.28);
+            slab.strokeRoundedRect(-18, -42, 36, 42, 5);
+            const rune = this.add.text(0, -24, String(idx + 1), {
+                fontFamily: "Cormorant Garamond, serif",
+                fontSize: "18px",
+                color: "#fadb5f",
+            });
+            rune.setOrigin(0.5);
+            const glow = this.add.circle(0, -20, 22, 0xfadb5f, 0.06);
+            glow.setBlendMode(Phaser.BlendModes.ADD);
+            stone.add([glow, slab, rune]);
+            stone.kind = "initiation-stone";
+            stone.stoneId = data.id;
+            stone.named = false;
+            stone.glow = glow;
+            this._attachMirrorLabels(stone, data.surfaceLabel, data.hiddenLabel, -54);
+            this.worldLayer.add(stone);
+            this.initiationStones.push(stone);
+        });
+
+        const well = this.add.container(W * 0.9, H - 98);
+        const bowl = this.add.graphics();
+        bowl.fillStyle(0x0f172a, 0.75);
+        bowl.fillEllipse(0, 0, 72, 28);
+        bowl.lineStyle(1, 0xfadb5f, 0.32);
+        bowl.strokeEllipse(0, 0, 72, 28);
+        const light = this.add.circle(0, -4, 26, 0xfadb5f, 0.04);
+        light.setBlendMode(Phaser.BlendModes.ADD);
+        well.add([light, bowl]);
+        well.setAlpha(0.28);
+        well.kind = "voice-well";
+        well.light = light;
+        this._attachMirrorLabels(well, "Silent well", "Names become voice", -44);
+        this.worldLayer.add(well);
+        this.voiceWell = well;
+
+        this._showNarration(
+            "Past the bridge waits a chamber with no doors, only names that were never spoken aloud."
+        );
+        this._afterDialogue = () => {
+            gameEvents.emit("script:start", { name: "initiation-opening" });
+            this._afterDialogue = () => {
+                this._emitChapter11Progress();
+                gameEvents.emit(
+                    "hud:hint",
+                    "Use Mirror beside each stone, then press Space to name what waits there."
+                );
+            };
+        };
+        this._emitChapter11Progress();
+    }
+
     _spawnKavi() {
         if (this.kaviSpawned) return;
         this.kaviSpawned = true;
@@ -1328,6 +1414,7 @@ export default class ChapterScene extends Phaser.Scene {
             ...(this.trialFires || []).filter((f) => !f.completed),
             ...(this.memoryBuoys || []).filter((b) => !b.heard),
             ...(this.riverHelpers || []).filter((h) => !h.met),
+            ...(this.initiationStones || []).filter((s) => !s.named),
             this.tara,
             this.mural,
             this.shadowTwin,
@@ -1336,6 +1423,7 @@ export default class ChapterScene extends Phaser.Scene {
             this.centralFlame,
             this.farShore,
             this.riverBridge,
+            this.voiceWell,
         ].filter(Boolean);
 
         targets.forEach((t) => {
@@ -1488,6 +1576,23 @@ export default class ChapterScene extends Phaser.Scene {
                     label: "Cross bridge",
                 });
             }
+        } else if (this.chapterId === 11) {
+            (this.initiationStones || [])
+                .filter((s) => !s.named)
+                .forEach((s) =>
+                    candidates.push({
+                        target: s,
+                        range: 62,
+                        label: "Name it",
+                    })
+                );
+            if (this.voiceWellOpen && this.voiceWell) {
+                candidates.push({
+                    target: this.voiceWell,
+                    range: 66,
+                    label: "Speak vow",
+                });
+            }
         }
 
         let nearest = null;
@@ -1590,6 +1695,15 @@ export default class ChapterScene extends Phaser.Scene {
                 met < 4
                     ? "Stand beside a helper and press Space. Mirror reveals what they carry."
                     : "The bridge is complete. Cross it."
+            );
+        } else if (this.chapterId === 11) {
+            const named =
+                this.initiationStones?.filter((s) => s.named).length || 0;
+            gameEvents.emit(
+                "hud:hint",
+                named < 4
+                    ? "Stand beside an unnamed stone with Mirror on, then press Space."
+                    : "The voice well is awake. Speak the names back to it."
             );
         }
     }
@@ -1739,6 +1853,33 @@ export default class ChapterScene extends Phaser.Scene {
                 Math.abs(this.riverBridge.x - this.hero.x) < 64
             ) {
                 this._startRiverClosing();
+                return;
+            }
+            this._showNoTargetHint();
+        } else if (this.chapterId === 11) {
+            for (const stone of this.initiationStones || []) {
+                if (Math.abs(stone.x - this.hero.x) < 62 && !stone.named) {
+                    if (!this.mirrorActive) {
+                        gameEvents.emit(
+                            "hud:hint",
+                            "Turn Mirror on beside the stone, then press Space to name it."
+                        );
+                        return;
+                    }
+                    gameEvents.emit("script:start", {
+                        name: "initiation-stone",
+                        stoneId: stone.stoneId,
+                    });
+                    this._afterDialogue = () => this._collectInitiationStone(stone);
+                    return;
+                }
+            }
+            if (
+                this.voiceWellOpen &&
+                this.voiceWell &&
+                Math.abs(this.voiceWell.x - this.hero.x) < 66
+            ) {
+                this._startInitiationClosing();
                 return;
             }
             this._showNoTargetHint();
@@ -2091,6 +2232,66 @@ export default class ChapterScene extends Phaser.Scene {
         gameEvents.emit("script:start", { name: "river-closing" });
     }
 
+    _collectInitiationStone(stone) {
+        if (!stone || stone.named) return;
+        stone.named = true;
+        gameEvents.emit("lantern:adjust", 0.055);
+        gameEvents.emit("fx:flicker");
+        if (stone.glow) {
+            this.tweens.add({
+                targets: stone.glow,
+                alpha: { from: 0.08, to: 0.42 },
+                scale: { from: 1, to: 1.7 },
+                duration: 520,
+                yoyo: true,
+                ease: "sine.inOut",
+            });
+        }
+        this.tweens.add({
+            targets: stone,
+            y: stone.y - 8,
+            duration: 360,
+            yoyo: true,
+            ease: "sine.inOut",
+        });
+
+        const named = this.initiationStones.filter((s) => s.named).length;
+        if (named === 4 && !this.voiceWellOpen) {
+            this.voiceWellOpen = true;
+            if (this.voiceWell) {
+                this.tweens.add({
+                    targets: this.voiceWell,
+                    alpha: 1,
+                    duration: 700,
+                    ease: "sine.out",
+                });
+                if (this.voiceWell.light) {
+                    this.tweens.add({
+                        targets: this.voiceWell.light,
+                        alpha: { from: 0.16, to: 0.58 },
+                        scale: { from: 0.7, to: 1.9 },
+                        duration: 1200,
+                        yoyo: true,
+                        repeat: -1,
+                        ease: "sine.inOut",
+                    });
+                }
+            }
+            gameEvents.emit(
+                "hud:hint",
+                "The well has heard every name. Step close and speak them back."
+            );
+        }
+        this._emitChapter11Progress();
+    }
+
+    _startInitiationClosing() {
+        if (this.initiationClosingStarted || this.completed) return;
+        this.initiationClosingStarted = true;
+        this._afterDialogue = () => this._completeChapter();
+        gameEvents.emit("script:start", { name: "initiation-closing" });
+    }
+
     _checkChapter1Progress() {
         const allSpoken = this.citizens.every((c) => c.spoken);
         const allPulses = this.pulses.every((p) => p.collected);
@@ -2118,6 +2319,7 @@ export default class ChapterScene extends Phaser.Scene {
         if (this.chapterId === 8) this._emitChapter8Progress();
         if (this.chapterId === 9) this._emitChapter9Progress();
         if (this.chapterId === 10) this._emitChapter10Progress();
+        if (this.chapterId === 11) this._emitChapter11Progress();
         gameEvents.emit("chapter:complete", { chapterId: this.chapterId });
     }
 
@@ -2312,6 +2514,27 @@ export default class ChapterScene extends Phaser.Scene {
             current: met + (atBridge ? 1 : 0),
             total: 5,
             phase: this.bridgeOpen ? "Bridge complete" : "Riverbank",
+        });
+    }
+
+    _emitChapter11Progress() {
+        if (!this.initiationStones) return;
+        const named = this.initiationStones.filter((s) => s.named).length;
+        const atWell =
+            this.voiceWellOpen && this.voiceWell
+                ? Math.abs(this.voiceWell.x - this.hero.x) < 66
+                : false;
+        gameEvents.emit("chapter:progress", {
+            objective:
+                named < 4 ? "Name what has waited unspoken." : "Speak the names into the well.",
+            detail:
+                named < 4
+                    ? "Use Mirror beside each stone, then press Space to hear and name it."
+                    : "The well is awake. Stand beside it and press Space.",
+            label: "names",
+            current: named + (atWell ? 1 : 0),
+            total: 5,
+            phase: this.voiceWellOpen ? "Voice well" : "Naming chamber",
         });
     }
 
@@ -2549,6 +2772,18 @@ export default class ChapterScene extends Phaser.Scene {
             if (!this.completed) this._emitChapter10Progress();
         }
 
+        // Chapter 11: name stones, then speak into the well
+        if (this.chapterId === 11 && canMove) {
+            if (
+                this.voiceWellOpen &&
+                this.voiceWell &&
+                Math.abs(this.voiceWell.x - this.hero.x) < 48
+            ) {
+                this._startInitiationClosing();
+            }
+            if (!this.completed) this._emitChapter11Progress();
+        }
+
         // Clamp hero position
         this.hero.x = Phaser.Math.Clamp(this.hero.x + vx, 30, W - 30);
         this.hero.y = Phaser.Math.Clamp(
@@ -2590,6 +2825,7 @@ export default class ChapterScene extends Phaser.Scene {
         if (this.chapterId === 8) intensity = 0.045;
         if (this.chapterId === 9) intensity = 0.055;
         if (this.chapterId === 10) intensity = 0.025;
+        if (this.chapterId === 11) intensity = 0.035;
         if (this.chapterId === 3) intensity = 0.03;
         for (let i = 0; i < bands; i++) {
             const y = 80 + i * 65 + Math.sin((this._fogOffset + i * 20) * 0.05) * 6;

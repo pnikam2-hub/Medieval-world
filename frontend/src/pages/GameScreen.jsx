@@ -32,6 +32,7 @@ const CHAPTER_AMBIENT = {
     8: "road",
     9: "fear",
     10: "road",
+    11: "cave",
 };
 
 export default function GameScreen() {
@@ -131,6 +132,7 @@ export default function GameScreen() {
         if (completedChapterId === 8) return "Tenderness";
         if (completedChapterId === 9) return "Stillness";
         if (completedChapterId === 10) return "Connection";
+        if (completedChapterId === 11) return "Voice";
         return null;
     }, [completedChapterId]);
 

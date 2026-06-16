@@ -136,7 +136,20 @@ export const CHAPTERS = [
             "Who has been a helper on your journey, and have you let them know what their presence meant?",
         helperLine: "The journey was always meant to be shared. - Kavi",
     },
-    { id: 11, title: "Initiation", subtitle: "Naming the unspoken", unlocked: false, kind: "locked" },
+    {
+        id: 11,
+        title: "Initiation",
+        subtitle: "Naming the unspoken",
+        unlocked: true,
+        kind: "initiation",
+        narration:
+            "Past the bridge waits a chamber with no doors, only names that were never spoken aloud.",
+        endText:
+            "What is named is no longer alone in the dark. A true name becomes a handhold.",
+        journalQuestion:
+            "What have you avoided naming, and what might change if you spoke it gently?",
+        helperLine: "A true name is not a chain. It is a doorway. - Asha",
+    },
     { id: 12, title: "Threshold Crossing", subtitle: "The inward turn", unlocked: false, kind: "locked" },
     { id: 13, title: "Apotheosis", subtitle: "Brief moment of vastness", unlocked: false, kind: "locked" },
     { id: 14, title: "Enter the Cave", subtitle: "Belly of the long dark", unlocked: false, kind: "locked" },
@@ -584,4 +597,48 @@ export const RIVER_CLOSING_DIALOGUE = [
     { speaker: "Soma", text: "You carry my fire, and yours." },
     { speaker: "Rhea", text: "Cross. We will be here when you need us again." },
     { speaker: "Kavi", text: "Four helpers. Four gifts. You thought you were doing this alone." },
+];
+
+export const INITIATION_STONES = [
+    {
+        id: "grief",
+        x: 0.24,
+        surfaceLabel: "Old silence",
+        hiddenLabel: "Grief asking to be named",
+        line: "I am grief. I am not here to end the journey. I am here because love mattered.",
+    },
+    {
+        id: "anger",
+        x: 0.42,
+        surfaceLabel: "Hot stone",
+        hiddenLabel: "Anger guarding a boundary",
+        line: "I am anger. I became loud when something precious was crossed.",
+    },
+    {
+        id: "shame",
+        x: 0.6,
+        surfaceLabel: "Low shadow",
+        hiddenLabel: "Shame hiding a wish to belong",
+        line: "I am shame. I learned to shrink before anyone could send me away.",
+    },
+    {
+        id: "longing",
+        x: 0.78,
+        surfaceLabel: "Faint song",
+        hiddenLabel: "Longing remembering the way home",
+        line: "I am longing. I point toward what the heart still knows is possible.",
+    },
+];
+
+export const INITIATION_OPENING_DIALOGUE = [
+    { speaker: "Asha", text: "This chamber does not ask you to conquer anything." },
+    { speaker: "You", text: "Then what does it want?" },
+    { speaker: "Asha", text: "Names. Speak what has been waiting without a name." },
+];
+
+export const INITIATION_CLOSING_DIALOGUE = [
+    { speaker: "You", text: "Grief. Anger. Shame. Longing." },
+    { speaker: "Asha", text: "Now they can answer when called, instead of ruling from the dark." },
+    { speaker: "Kavi", text: "That felt frightening. Also... lighter." },
+    { speaker: "You", text: "Maybe naming is how the light finds the room." },
 ];
