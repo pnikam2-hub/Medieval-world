@@ -206,8 +206,34 @@ export const CHAPTERS = [
             "What fear have you been calling cowardice that is actually love: afraid of failing, afraid of harming, afraid of losing someone you have not yet found again?",
         helperLine: "The stillest things are often the strongest. - You",
     },
-    { id: 16, title: "Helpers", subtitle: "Asha, Nadi, Soma, Rhea", unlocked: false, kind: "locked" },
-    { id: 17, title: "Belly of the Whale", subtitle: "Listening beneath the surface", unlocked: false, kind: "locked" },
+    {
+        id: 16,
+        title: "The Helpers Return",
+        subtitle: "Asha, Nadi, Soma, Rhea",
+        unlocked: true,
+        kind: "explore",
+        narration:
+            "A warm chamber opens inside the dark. Four helpers wait where the road becomes too deep to walk alone.",
+        endText:
+            "You were never meant to carry this alone. The gifts of others are not debts; they are lanterns held out in the dark.",
+        journalQuestion:
+            "What gift has someone given you, not a thing but a way of being, that you carry without having fully thanked them?",
+        helperLine: "Four gifts. Four helpers. I am being very brave about this. - Kavi",
+    },
+    {
+        id: 17,
+        title: "The Deep Listen",
+        subtitle: "Beneath every name, a sound",
+        unlocked: true,
+        kind: "explore",
+        narration:
+            "Below the chamber and below the long dark, there is a listening that has been happening since before you were wounded.",
+        endText:
+            "There is a listening at the bottom of you that has never stopped. Being heard, truly heard, is sometimes enough to begin again.",
+        journalQuestion:
+            "When have you felt truly heard, not agreed with or fixed, just heard, and what did that hearing make possible?",
+        helperLine: "It was hearing you the whole time. - Kavi",
+    },
     { id: 18, title: "Rescue", subtitle: "What the heart remembers", unlocked: false, kind: "locked" },
     { id: 19, title: "Tests", subtitle: "Shame, anger, power", unlocked: false, kind: "locked" },
     { id: 20, title: "Magical Flight", subtitle: "Rising on the breath of helpers", unlocked: false, kind: "locked" },
@@ -986,4 +1012,125 @@ export const COURAGE_CLOSING = [
     },
     { speaker: "Kavi", text: "He did not move. The whole time. He did not need to." },
     { speaker: "You", text: "The stillest things are often the strongest." },
+];
+
+export const HELPERS_RETURN_OPENING = [
+    { speaker: "Kavi", text: "They are here. All four of them. How did they get here? This is the inside of the inside." },
+    {
+        speaker: "Asha",
+        text: "The inside is where helpers have always been. You just had to arrive deep enough to see us.",
+    },
+    { speaker: "You", text: "At the river, you gave us gifts for the road." },
+    {
+        speaker: "Nadi",
+        text: "The road is behind you. What comes next needs different gifts.",
+    },
+];
+
+export const HELPER_RETURN_GIFTS = [
+    {
+        id: "asha",
+        name: "Asha",
+        x: 0.18,
+        color: 0xfadb5f,
+        gift: "Remembering",
+        surfaceLabel: "The Rememberer",
+        hiddenLabel: "Afraid that if I stop remembering, everything I love disappears",
+        deeperLabel: "Memory is not a burden. It is a hand reaching across time.",
+        lines: [
+            "When you face the dragon, it will try to make you forget who you are.",
+            "Hold this: one true memory. I have been keeping it for you since the river.",
+            "The moment you decided to walk. Not the hero's walk. Just the first step. That was the truest thing.",
+        ],
+    },
+    {
+        id: "nadi",
+        name: "Nadi",
+        x: 0.38,
+        color: 0x38bdf8,
+        gift: "Listening",
+        surfaceLabel: "The River-Listener",
+        hiddenLabel: "Afraid of my own silence",
+        deeperLabel: "Silence is not emptiness. It is the sound of everything waiting to be heard.",
+        lines: [
+            "There will be a silence so deep that even your voice will feel swallowed.",
+            "When that happens, do not try to speak. Listen.",
+            "I have put a listening in your lantern: water under stone.",
+        ],
+    },
+    {
+        id: "soma",
+        name: "Soma",
+        x: 0.62,
+        color: 0xfb8500,
+        gift: "Warmth",
+        surfaceLabel: "The Fire-Keeper",
+        hiddenLabel: "Terrified of the dark inside myself",
+        deeperLabel: "The dark inside is not evil. It is the place where light begins.",
+        lines: [
+            "The long dark is cold. Not winter-cold. Forgetting-cold.",
+            "Take this fire. It does not burn. It only warms. It will not go out.",
+            "It is not about fuel. It is about what you are willing to hold.",
+        ],
+    },
+    {
+        id: "rhea",
+        name: "Rhea",
+        x: 0.82,
+        color: 0xe2e8f0,
+        gift: "Unseen Bridge",
+        surfaceLabel: "The Bridge-Builder",
+        hiddenLabel: "I build bridges because I have burned too many",
+        deeperLabel: "Every bridge is an apology the world accepts without words.",
+        lines: [
+            "You will come to a place where there is no visible way forward.",
+            "A bridge will appear because you became someone who can see it.",
+            "If you cannot see it, walk anyway. Your feet will know before your eyes.",
+        ],
+    },
+];
+
+export const HELPERS_RETURN_CLOSING = [
+    { speaker: "Asha", text: "Four gifts. Remembering. Listening. Warmth. The unseen bridge." },
+    { speaker: "Nadi", text: "Carry them. They will not weigh you down." },
+    { speaker: "Soma", text: "They will lift you. That is what gifts do, when they are given freely." },
+    { speaker: "Rhea", text: "Go now. The deepest part is ahead. But you do not walk it alone." },
+    { speaker: "Kavi", text: "Four gifts. Four helpers. I am going to be very brave about this and not cry." },
+    { speaker: "You", text: "You can cry, Kavi." },
+    { speaker: "Kavi", text: "...Maybe a little. Later. After the dragon." },
+];
+
+export const DEEP_LISTEN_OPENING = [
+    {
+        speaker: null,
+        kind: "narration",
+        text: "Below the chamber. Below the vastness. Below the long dark. Below even the place where helpers wait.",
+    },
+    {
+        speaker: null,
+        kind: "narration",
+        text: "Here, there are no names. No stones. No words. Only a listening that has been happening since before you were wounded.",
+    },
+    { speaker: "Kavi", text: "I do not know what to say. There is nothing to say. But I can hear something." },
+    { speaker: null, kind: "narration", text: "Wait. Do not fill the silence. Let it fill you." },
+];
+
+export const DEEP_LISTEN_FRAGMENTS = [
+    "Before the first stone was placed, there was hum.",
+    "Before the first wound, there was wholeness. It is still here. Under everything.",
+    "You have been speaking. I have been hearing. All of it.",
+    "I am not a voice. I am the space voices rise from.",
+    "When you are ready, rise. I will still be here. I have always been here.",
+];
+
+export const DEEP_LISTEN_CLOSING = [
+    {
+        speaker: "Kavi",
+        text: "It has been here. Under everything. Listening. Even when you could not hear it, it was hearing you.",
+    },
+    {
+        speaker: "You",
+        text: "All those years I thought I was alone in the silence. I was not. I just could not hear the listener.",
+    },
+    { speaker: "Kavi", text: "Now you can. That changes things. That changes everything." },
 ];

@@ -135,6 +135,8 @@ export default function GameScreen() {
         if (completedChapterId === 11) return "Voice (Speaking the Unspoken)";
         if (completedChapterId === 13) return "Wonder";
         if (completedChapterId === 15) return "Courage";
+        if (completedChapterId === 16) return "Receiving";
+        if (completedChapterId === 17) return "Listening";
         return null;
     }, [completedChapterId]);
 

@@ -4,6 +4,12 @@ import {
     COURAGE_FEAR_OBJECTS,
     COURAGE_OPENING,
     CITIZENS,
+    DEEP_LISTEN_CLOSING,
+    DEEP_LISTEN_FRAGMENTS,
+    DEEP_LISTEN_OPENING,
+    HELPER_RETURN_GIFTS,
+    HELPERS_RETURN_CLOSING,
+    HELPERS_RETURN_OPENING,
     INITIATION_CLOSING_DIALOGUE,
     INITIATION_OPENING_DIALOGUE,
     INITIATION_STONES,
@@ -222,6 +228,32 @@ export function buildScript(payload) {
     }
     if (payload.name === "courage-closing") {
         return COURAGE_CLOSING.map(withSpeakerLabel);
+    }
+    if (payload.name === "helpers-return-opening") {
+        return HELPERS_RETURN_OPENING.map(withSpeakerLabel);
+    }
+    if (payload.name === "helpers-return-gift") {
+        const helper = HELPER_RETURN_GIFTS.find((x) => x.id === payload.helperId);
+        if (!helper) return null;
+        return helper.lines.map((text) =>
+            withSpeakerLabel({
+                speaker: helper.name,
+                text,
+            })
+        );
+    }
+    if (payload.name === "helpers-return-closing") {
+        return HELPERS_RETURN_CLOSING.map(withSpeakerLabel);
+    }
+    if (payload.name === "deep-listen-opening") {
+        return DEEP_LISTEN_OPENING.map(withSpeakerLabel);
+    }
+    if (payload.name === "deep-listen-pulse") {
+        const text = DEEP_LISTEN_FRAGMENTS[payload.index] || DEEP_LISTEN_FRAGMENTS[0];
+        return [{ speaker: null, kind: "narration", text }].map(withSpeakerLabel);
+    }
+    if (payload.name === "deep-listen-closing") {
+        return DEEP_LISTEN_CLOSING.map(withSpeakerLabel);
     }
     if (payload.name === "shadow-dialogue") {
         return [

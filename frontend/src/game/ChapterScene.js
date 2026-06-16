@@ -2,6 +2,8 @@ import Phaser from "phaser";
 import { gameEvents } from "./events";
 import {
     COURAGE_FEAR_OBJECTS,
+    DEEP_LISTEN_FRAGMENTS,
+    HELPER_RETURN_GIFTS,
     INWARD_THRESHOLD_MARKERS,
     INITIATION_STONES,
     LONG_DARK_ECHOES,
@@ -68,6 +70,8 @@ export default class ChapterScene extends Phaser.Scene {
         else if (chapterId === 13) this._setupChapter13();
         else if (chapterId === 14) this._setupChapter14();
         else if (chapterId === 15) this._setupChapter15();
+        else if (chapterId === 16) this._setupChapter16();
+        else if (chapterId === 17) this._setupChapter17();
 
         // Mirror lens toggle from React
         this._onMirror = (active) => {
@@ -219,6 +223,26 @@ export default class ChapterScene extends Phaser.Scene {
                 chamber.strokePath();
             }
             this.bgLayer.add(chamber);
+        }
+
+        if ([16].includes(this.chapterId)) {
+            const chamber = this.add.graphics();
+            chamber.fillGradientStyle(0x1a1007, 0x19130b, 0x2a1907, 0x080604, 1);
+            chamber.fillRect(0, 0, W, H);
+            chamber.fillStyle(0xfadb5f, 0.07);
+            chamber.fillEllipse(W / 2, H * 0.57, W * 0.86, H * 0.56);
+            chamber.lineStyle(1, 0xfadb5f, 0.11);
+            for (let i = 0; i < 6; i++) chamber.strokeCircle(W / 2, H - 94, 86 + i * 42);
+            this.bgLayer.add(chamber);
+        }
+
+        if ([17].includes(this.chapterId)) {
+            const deep = this.add.graphics();
+            deep.fillGradientStyle(0x00030a, 0x020817, 0x03111f, 0x000208, 1);
+            deep.fillRect(0, 0, W, H);
+            deep.fillStyle(0x38bdf8, 0.025);
+            deep.fillEllipse(W / 2, H * 0.58, W * 0.6, H * 0.42);
+            this.bgLayer.add(deep);
         }
 
         if ([8].includes(this.chapterId)) {
@@ -1632,6 +1656,87 @@ export default class ChapterScene extends Phaser.Scene {
         this._emitChapter15Progress();
     }
 
+    // ------------------------------------------------------------------
+    // Chapter 16: The Helpers Return - receive four inner gifts
+    // ------------------------------------------------------------------
+    _setupChapter16() {
+        this.returnHelpers = [];
+        this.helperReturnClosingStarted = false;
+        this.helperGiftSparks = [];
+        this._spawnKavi();
+
+        HELPER_RETURN_GIFTS.forEach((data) => {
+            const helper = this._makeNpc(W * data.x, H - 110, data.name, {
+                surfaceLabel: data.surfaceLabel,
+                hiddenLabel: data.hiddenLabel,
+            });
+            const glow = this.add.circle(0, -32, 26, data.color, 0.18);
+            glow.setBlendMode(Phaser.BlendModes.ADD);
+            helper.add(glow);
+            helper.helperId = data.id;
+            helper.giftColor = data.color;
+            helper.deeperText = data.deeperLabel;
+            helper.received = false;
+            helper.kind = "return-helper";
+            this.tweens.add({
+                targets: glow,
+                alpha: { from: 0.08, to: 0.34 },
+                scale: { from: 0.8, to: 1.35 },
+                duration: 1500,
+                yoyo: true,
+                repeat: -1,
+                ease: "sine.inOut",
+            });
+            this.worldLayer.add(helper);
+            this.returnHelpers.push(helper);
+        });
+
+        this._showNarration(
+            "A warm chamber opens inside the dark. Four helpers wait where the road becomes too deep to walk alone."
+        );
+        this._afterDialogue = () => {
+            gameEvents.emit("script:start", { name: "helpers-return-opening" });
+            this._afterDialogue = () => {
+                this._emitChapter16Progress();
+                gameEvents.emit("hud:hint", "Receive each helper's gift. Mirror reveals what each helper carries.");
+            };
+        };
+        this._emitChapter16Progress();
+    }
+
+    // ------------------------------------------------------------------
+    // Chapter 17: The Deep Listen - wait for five wordless pulses
+    // ------------------------------------------------------------------
+    _setupChapter17() {
+        this.deepListenPulses = [];
+        this.deepListenHeard = 0;
+        this.deepListenStarted = false;
+        this.deepListenClosingStarted = false;
+        this.deepListenNextAt = 0;
+        this.deepListenHintAt = 0;
+        this._spawnKavi();
+        this.hero.x = W * 0.5;
+        this.hero.y = H - 118;
+        if (this.heroLanternHalo) {
+            this.heroLanternHalo.setAlpha(0.1);
+            this.heroLanternHalo.setScale(0.75);
+        }
+
+        this._showNarration(
+            "Below the chamber and below the long dark, there is a listening that has been happening since before you were wounded."
+        );
+        this._afterDialogue = () => {
+            gameEvents.emit("script:start", { name: "deep-listen-opening" });
+            this._afterDialogue = () => {
+                this.deepListenStarted = true;
+                this.deepListenNextAt = this.time.now + 2200;
+                gameEvents.emit("hud:hint", "Wait. A pulse will appear. Walk to it slowly and press Space.");
+                this._emitChapter17Progress();
+            };
+        };
+        this._emitChapter17Progress();
+    }
+
     _spawnKavi() {
         if (this.kaviSpawned) return;
         this.kaviSpawned = true;
@@ -1760,6 +1865,7 @@ export default class ChapterScene extends Phaser.Scene {
             ...(this.initiationStones || []).filter((s) => !s.named),
             ...(this.longDarkEchoes || []).filter((e) => !e.heard),
             ...(this.courageFears || []).filter((f) => !f.revealed),
+            ...(this.returnHelpers || []).filter((h) => !h.received),
             this.tara,
             this.mural,
             this.shadowTwin,
@@ -1964,6 +2070,26 @@ export default class ChapterScene extends Phaser.Scene {
                         target: f,
                         range: 66,
                         label: "Look deeper",
+                    })
+                );
+        } else if (this.chapterId === 16) {
+            (this.returnHelpers || [])
+                .filter((h) => !h.received)
+                .forEach((h) =>
+                    candidates.push({
+                        target: h,
+                        range: 68,
+                        label: "Receive gift",
+                    })
+                );
+        } else if (this.chapterId === 17) {
+            (this.deepListenPulses || [])
+                .filter((p) => !p.heard)
+                .forEach((p) =>
+                    candidates.push({
+                        target: p,
+                        range: 62,
+                        label: "Listen",
                     })
                 );
         }
@@ -2284,6 +2410,22 @@ export default class ChapterScene extends Phaser.Scene {
                         return;
                     }
                     this._revealCourageFear(fear);
+                    return;
+                }
+            }
+            this._showNoTargetHint();
+        } else if (this.chapterId === 16) {
+            for (const helper of this.returnHelpers || []) {
+                if (Math.abs(helper.x - this.hero.x) < 68 && !helper.received) {
+                    this._receiveReturnGift(helper);
+                    return;
+                }
+            }
+            this._showNoTargetHint();
+        } else if (this.chapterId === 17) {
+            for (const pulse of this.deepListenPulses || []) {
+                if (Math.abs(pulse.x - this.hero.x) < 62 && !pulse.heard) {
+                    this._hearDeepListenPulse(pulse);
                     return;
                 }
             }
@@ -2792,6 +2934,127 @@ export default class ChapterScene extends Phaser.Scene {
         gameEvents.emit("script:start", { name: "courage-closing" });
     }
 
+    _receiveReturnGift(helper) {
+        if (!helper || helper.received) return;
+        helper.received = true;
+        this._revealDeepTruth(helper, helper.deeperText, -94);
+        this._attachGiftSpark(helper.giftColor);
+        gameEvents.emit("lantern:adjust", 0.03);
+        gameEvents.emit("fx:flicker");
+        gameEvents.emit("script:start", {
+            name: "helpers-return-gift",
+            helperId: helper.helperId,
+        });
+        this._afterDialogue = () => {
+            const received = this.returnHelpers.filter((h) => h.received).length;
+            if (received === this.returnHelpers.length) this._startHelpersReturnClosing();
+            else this._emitChapter16Progress();
+        };
+    }
+
+    _attachGiftSpark(color) {
+        const idx = this.helperGiftSparks.length;
+        const angle = (-90 + idx * 38) * (Math.PI / 180);
+        const spark = this.add.circle(
+            Math.cos(angle) * 18,
+            -22 + Math.sin(angle) * 10,
+            3.4,
+            color,
+            0.95
+        );
+        spark.setBlendMode(Phaser.BlendModes.ADD);
+        this.hero.add(spark);
+        this.helperGiftSparks.push(spark);
+        this.tweens.add({
+            targets: spark,
+            alpha: { from: 0.45, to: 1 },
+            scale: { from: 0.8, to: 1.55 },
+            duration: 900,
+            yoyo: true,
+            repeat: -1,
+            ease: "sine.inOut",
+        });
+    }
+
+    _startHelpersReturnClosing() {
+        if (this.helperReturnClosingStarted || this.completed) return;
+        this.helperReturnClosingStarted = true;
+        this._afterDialogue = () => this._completeChapter();
+        gameEvents.emit("script:start", { name: "helpers-return-closing" });
+    }
+
+    _spawnDeepListenPulse(finalPulse = false) {
+        if (!this.deepListenStarted || this.completed) return;
+        const index = this.deepListenHeard;
+        const x = finalPulse
+            ? W * 0.5
+            : W * (0.25 + Math.random() * 0.5);
+        const y = finalPulse
+            ? H - 118
+            : H - 160 + Math.random() * 60;
+        const pulse = this.add.container(x, y);
+        const color = finalPulse ? 0xfadb5f : 0x38bdf8;
+        const ring = this.add.circle(0, 0, finalPulse ? 28 : 20, color, 0.06);
+        ring.setStrokeStyle(1, color, finalPulse ? 0.65 : 0.42);
+        ring.setBlendMode(Phaser.BlendModes.ADD);
+        const core = this.add.circle(0, 0, finalPulse ? 6 : 4, color, finalPulse ? 0.75 : 0.5);
+        core.setBlendMode(Phaser.BlendModes.ADD);
+        pulse.add([ring, core]);
+        pulse.kind = finalPulse ? "deep-listen-final" : "deep-listen-pulse";
+        pulse.index = index;
+        pulse.finalPulse = finalPulse;
+        pulse.heard = false;
+        pulse.ring = ring;
+        this.tweens.add({
+            targets: ring,
+            alpha: { from: 0.06, to: finalPulse ? 0.5 : 0.28 },
+            scale: { from: 0.7, to: finalPulse ? 2.1 : 1.65 },
+            duration: finalPulse ? 1800 : 1400,
+            yoyo: true,
+            repeat: -1,
+            ease: "sine.inOut",
+        });
+        this.worldLayer.add(pulse);
+        this.deepListenPulses.push(pulse);
+    }
+
+    _hearDeepListenPulse(pulse) {
+        if (!pulse || pulse.heard) return;
+        pulse.heard = true;
+        gameEvents.emit("lantern:adjust", pulse.finalPulse ? 0.06 : 0.025);
+        gameEvents.emit("fx:flicker");
+        this.tweens.add({
+            targets: pulse,
+            alpha: 0,
+            scale: 0.2,
+            duration: 900,
+            ease: "sine.inOut",
+            onComplete: () => pulse.destroy(),
+        });
+        if (pulse.finalPulse) {
+            this._afterDialogue = () => this._completeChapter();
+            gameEvents.emit("script:start", { name: "deep-listen-closing" });
+            return;
+        }
+        const index = pulse.index;
+        gameEvents.emit("script:start", {
+            name: "deep-listen-pulse",
+            index,
+        });
+        this._afterDialogue = () => {
+            this.deepListenHeard += 1;
+            if (this.deepListenHeard === 3) {
+                gameEvents.emit("hud:hint", "Kavi hears it too. Keep listening.");
+            }
+            if (this.deepListenHeard >= DEEP_LISTEN_FRAGMENTS.length) {
+                this._spawnDeepListenPulse(true);
+            } else {
+                this.deepListenNextAt = this.time.now + 2600;
+            }
+            this._emitChapter17Progress();
+        };
+    }
+
     _checkChapter1Progress() {
         const allSpoken = this.citizens.every((c) => c.spoken);
         const allPulses = this.pulses.every((p) => p.collected);
@@ -2823,6 +3086,8 @@ export default class ChapterScene extends Phaser.Scene {
         if (this.chapterId === 12) this._emitChapter12Progress();
         if (this.chapterId === 14) this._emitChapter14Progress();
         if (this.chapterId === 15) this._emitChapter15Progress();
+        if (this.chapterId === 16) this._emitChapter16Progress();
+        if (this.chapterId === 17) this._emitChapter17Progress();
         gameEvents.emit("chapter:complete", { chapterId: this.chapterId });
     }
 
@@ -3098,6 +3363,38 @@ export default class ChapterScene extends Phaser.Scene {
             current: revealed,
             total: 3,
             phase: this.courageClosingStarted ? "Courage" : "Veer's chamber",
+        });
+    }
+
+    _emitChapter16Progress() {
+        if (!this.returnHelpers) return;
+        const received = this.returnHelpers.filter((h) => h.received).length;
+        gameEvents.emit("chapter:progress", {
+            objective:
+                received < 4 ? "Receive the helpers' gifts." : "Receive the closing blessing.",
+            detail:
+                received < 4
+                    ? "Speak with each helper. Mirror reveals the burden beneath each gift."
+                    : "Remembering, listening, warmth, and the unseen bridge now travel with you.",
+            label: "gifts",
+            current: received,
+            total: 4,
+            phase: this.helperReturnClosingStarted ? "Blessing" : "Helper chamber",
+        });
+    }
+
+    _emitChapter17Progress() {
+        const heard = this.deepListenHeard || 0;
+        const finalReady = (this.deepListenPulses || []).some((p) => p.finalPulse && !p.heard);
+        gameEvents.emit("chapter:progress", {
+            objective: finalReady ? "Listen to the warm center." : "Listen to what is beneath the silence.",
+            detail: finalReady
+                ? "A final pulse has appeared at the center."
+                : "Wait for a blue pulse, walk to it slowly, then press Space.",
+            label: "heard",
+            current: heard + (finalReady ? 1 : 0),
+            total: DEEP_LISTEN_FRAGMENTS.length + 1,
+            phase: finalReady ? "Warm pulse" : "Deep listening",
         });
     }
 
@@ -3417,6 +3714,35 @@ export default class ChapterScene extends Phaser.Scene {
             if (!this.completed) this._emitChapter15Progress();
         }
 
+        // Chapter 16: receive the four helpers' gifts
+        if (this.chapterId === 16 && canMove) {
+            if (!this.completed) this._emitChapter16Progress();
+        }
+
+        // Chapter 17: deep listening is slow and pulse-led
+        if (this.chapterId === 17 && canMove) {
+            vx *= 0.32;
+            vy *= 0.32;
+            if (
+                this.deepListenStarted &&
+                !this.completed &&
+                this.deepListenHeard < DEEP_LISTEN_FRAGMENTS.length &&
+                !(this.deepListenPulses || []).some((p) => !p.heard) &&
+                time >= (this.deepListenNextAt || 0)
+            ) {
+                this._spawnDeepListenPulse(false);
+            }
+            if (
+                this.deepListenStarted &&
+                time - (this.deepListenHintAt || 0) > 11000 &&
+                !(this.deepListenPulses || []).some((p) => !p.heard)
+            ) {
+                this.deepListenHintAt = time;
+                gameEvents.emit("hud:hint", "Wait. Do not fill the silence. A pulse will appear.");
+            }
+            if (!this.completed) this._emitChapter17Progress();
+        }
+
         // Clamp hero position
         this.hero.x = Phaser.Math.Clamp(this.hero.x + vx, 30, W - 30);
         this.hero.y = Phaser.Math.Clamp(
@@ -3463,6 +3789,8 @@ export default class ChapterScene extends Phaser.Scene {
         if (this.chapterId === 13) intensity = 0.018;
         if (this.chapterId === 14) intensity = 0.025;
         if (this.chapterId === 15) intensity = 0.04;
+        if (this.chapterId === 16) intensity = 0.022;
+        if (this.chapterId === 17) intensity = 0.018;
         if (this.chapterId === 3) intensity = 0.03;
         for (let i = 0; i < bands; i++) {
             const y = 80 + i * 65 + Math.sin((this._fogOffset + i * 20) * 0.05) * 6;
